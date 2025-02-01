@@ -1,0 +1,150 @@
+---
+title: "VTADS Hypotheses And Model Structure"
+author: "Reed Scott"
+date: "2024-12-30"
+output: word_document
+---
+Brittany,
+
+Per your suggestion, I have spent some time thinking about my hypotheses for VTADs to inform the analysis I would like to do and how we can potentially subset our data. Below, I have provided my hypotheses and suggested model structure. Right now, I think that the best plan is to actually run two sets of multi-scale occupancy models: one for the biotic hypotheses and one for the abiotic hypotheses. If we would like to test for any interactions between biotic and abiotic factors, it may make sense to run these two lists of models first, and then run a third model list combining the top models for the biotic and biotic lists, some additive models, and some interactive models.
+
+# Biotic hypotheses
+
+In this potential analysis, we have 3 response variables: detection (p) prevalence ($\theta$) and 
+occupancy ($\psi$). For the biological hypotheses, based on my proposal, I have identified 4 
+predictor variables of interest: host species ID, $R_{0p}$, $\beta$ diversity, and $\alpha$ 
+diversity. 
+
+$R_0$ is defined as the basic reproductive rate of a disease within a single host, well mixed
+system. In a multi-patch, multi-species system $R_{0P}$ can be thought of as the patch level $R_0$ or
+number of neighboring patches that will experience new infections as a result of infections in this
+focal patch. Put another way: the higher the value of $R_{OP}$, the more infected individuals there
+are in that patch and the higher the likelihood that the disease will spread to neighboring patches.
+
+$\alpha$ diversity is quite simply the amount of species present at a patch. $\beta$ diversity can be
+thought of as the *difference* in species composition between a focal pond and it's neighboring ponds
+in the same meta-community. The more different the pond, the higher the $\beta$ diversity. If a
+dilution effect occurs, both of these could affect the p, $\theta$, and $\psi$ of a disease.
+
+One thing of note: with the dilution effect in mind, I think it's likely that $R_{0P}$ and $\beta$
+diversity will be strongly correlated. This is something I should check before diving in to analysis.
+It could also be possible that $\alpha$ and $\beta$ are correlated. If this is the case I would
+recommend using $\alpha$ as a random effect, since $\beta$ diversity is what we're really interested
+in for this study.
+
+With these definitions in mind, I have developed the following hypotheses:
+
+## Tables 1-3 Biological hypotheses
+
+### Table 1: Biological hypotheses for P
+
+Predictor | Reasoning
+----------|--------------------------
+Species   | Species should vary in the ability to carry and maintain a disease.
+$R_{0P}$  | In patches with higher $R_{0P}$, intensity of infections will likely be higher.
+$\alpha$  | In a dilution effect, increased diversity should decrease disease risk. This should connect to a lower p
+$\beta$   | Similar to the hypothesis for $\alpha$_
+
+
+### Table 2: Biological hypotheses for $\theta$
+
+Predictor | Reasoning
+----------|--------------------------
+Species   | In species that are better able to maintain or spread the disease, $\theta$ should be higher
+$R_{0P}$  | A higher $R_{0P}$ is likely driven by higher $\theta$ of the disease within a patch. Thus we expect that in patches with a $R_{0P}$, $\theta$ will be higher.
+$\beta$   | Higher diversity should drive down local prevalence of the disease.
+$\alpha$  | Higher diversity should drive down local prevalence of the disease.
+
+### Table 3: Biological hypotheses for $\psi$
+
+Predictor | Reasoning
+----------|--------------------------
+$\beta$   | Per a dilution effect, higher biodiversity should decrease the ability of the disease to persist in a patch
+$\alpha$  | Per a dilution effect, higher biodiversity should decrease the ability of the disease to persist in a patch
+$R_{0P}$  | In patches where $R_{0P}$ is low, the disease should not be able to persis
+
+In addition to the above hypotheses, I have also provided a table outlining the potential model 
+structure.
+
+## Table 4: Model Structure for biological hypotheses
+
+Detection (p)        | Prevalence ($\theta$) | Occupancy ($\psi$) 
+---------------------|-----------------------|--------------------
+~ 1                  |~ 1                    |~ 1                 
+~ $\beta$            |~ $\beta$              |~ $\beta$           
+~ $\alpha$           |~ $\alpha$             |~ $\alpha$                    
+~ $R_{0P}$           |~ $R_{0P}$             |~ $R_{0P}$
+~ Species            |~ Species              |
+
+*Note: we could explore additive or interactive models, however, looking at this list of variables*
+*I don't seen any additive or interactive effects that would be biologically relevant*
+
+# Abiotic hypotheses
+
+For this project we have collected a decent amount of abiotic data, and that is worth looking at!
+For now, I have suggested separating the analysis in to models for biological variables (described
+above) and abiotic variables, described here.
+
+We collected data on two key abiotic variables: temperature and conductivity. Each presents some 
+unique challenges with how they were measured. For temperature, we actually collected temperature in 
+two ways: using hobo loggers and a thermometer. Hobo loggers collected temperature measurements 
+steadily over the course of the season, while thermometers were used acutely, when we captured
+individuals. Because logger data was collected data over the course of a season, I suggest that this 
+data can be used to predict $\psi, \theta and p$ while the temperature data collected using 
+thermometers should only be used to  predict $\theta and p$.
+
+Conductivity presents an interesting challenge. We collected conductivity data using a handheld 
+device, similar to temperature. However, we did not measure conductivity acutely with each capture. 
+My suggested solution is that we apply conductivity as a "site level, survey specific" variable, and 
+we apply the same conductivity to all individuals caught in the visit. In this way, conductivity
+could be used to predict $\theta and p$.
+
+For each predictor variable, I have established relevant hypotheses (outlined below). Additionally,
+in Table 8 I provide what I think will be the model structure for these hypotheses.
+
+## Tables 5-7 Abiotic Hypotheses
+
+### Table 5: Biological Hypotheses for P
+
+Predictor             | Reasoning
+----------------------|----------------------------------------------------------------------------
+Hobo Temperature      | This will depend on the disease. However, based on our NEARMI project and studies of amphibian immune response, we could expect that as temperature increases, detection decreases.
+Hobo Temp variability | I expect that if variation in temperature is higher, detection will increase. This is because higher temperature variability should make it more difficult for amphibians to properly thermoregulate
+Acute temperature     | Should be similar to hypotheses for hobo temperature.
+Conductivity          | In ponds with higher conductivity, I would expect higher rates of detection
+
+
+### Table 6: Hypotheses for $\theta$
+Predictor             | Reasoning
+----------------------|----------------------------------------------------------------------------
+Hobo Temperature      | This will depend on the disease. However, based on our NEARMI project and studies of amphibian immune response, we could expect that as temperature increases, prevalence decreases.
+Hobo Temp variability | I expect that if variation in temperature is higher, prevalence will increase. This is because higher temperature variability should make it more difficult for amphibians to properly thermoregulate
+Acute temperature     | Should be similar to hypotheses for hobo temperature.
+Conductivity          | In ponds with higher conductivity, I would expect higher prevalence
+
+### Table 7: Hypotheses for $\psi$
+Predictor             | Reasoning
+----------------------|----------------------------------------------------------------------------
+Hobo Temperature      | This will depend on the disease. However, based on our NEARMI project and studies of amphibian immune response, we could expect that as temperature increase and amphibian immune systems are more functional, diseases should not be able to persist, and occupancy will be low
+Hobo Temp variability | I expect that if variation in temperature is higher, occupancy will increase. This is because higher temperature variability should make it more difficult for amphibians to properly thermoregulate and more likely for the disease to persist.
+
+
+## Table 8: Model Structure for abiotic hypotheses
+
+Detection (p)           | Prevalence ($\theta$)   | Occupancy ($\psi$) 
+------------------------|-------------------------|------------------------
+~ 1                     |~ 1                      |~ 1                 
+~ Hobo temp             |~ Hobo temp              |~ Hobo temp          
+~ Hobo temp variability |~ Hobo temp variability  |~ Hobo temp variability                    
+~ Acute temp            |~ Acute temp             |
+~ Conductivity          |~ Conductivity           |
+
+# Conclussion
+
+I think this is a good first step in developing my analysis for VTADs! I have begun to seriously,
+and critically, think about what this analysis will look like. I suggest two sets of multi-scale
+occupancy models. One question I have not addressed is whether it makes sense to run dynamic models or 2 sets of single season models. I would love to hear your thoughts on this as well as my hypotheses + suggested model structure!
+
+-Reed
+
+

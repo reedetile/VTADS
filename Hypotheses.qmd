@@ -1,0 +1,18 @@
+---
+title: "Hypotheses for VTADS"
+author: "Reed"
+format: docx
+editor: visual
+---
+
+Brittany,
+
+Per your suggestion, I have spent some time thinking about my hypotheses for VTADs to inform the analysis I would like to do and how we can potentially subset our data. Below, I have provided two tables for my hypotheses. Right now, I think that the best plan is to actually run two sets of multi-scale occupancy models: one for the biotic hypotheses and one for the abiotic hypotheses. If we would like to test for any interactions between biotic and abiotic factors, it may make sense to run these two lists of models first, and then run a third model list combining the top models for the biotic and biotic lists, some additive models, and some interactive models.
+
+# Biotic hypotheses
+
+## Table 1: Model Structure for biotic hypotheses
+
+Detection (p) \| Prevalence (\$\\theta\$) \| Occupancy (\$\\Psi\$) \|
+
+---------------\|——————————\|—————————\|
