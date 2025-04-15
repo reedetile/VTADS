@@ -72,15 +72,13 @@ det <- matrix(NA, nrow = ponds, ncol = total_tests)
 
 # Create a site lvl covar
 site_covs <- data.frame(betadiv = rnorm(ponds),
-                        alpha = rnorm(ponds),
-                        R0P = rnorm(ponds))
+                        alpha = rnorm(ponds))
 Spp <-  data.frame(matrix(sample(c("Spp1","Spp2","Spp3","Spp4"), size = total_frogs*ponds, replace = T), nrow = ponds, ncol = total_frogs))
 Spp <-  data.frame(lapply(Spp,as.factor))
 
 avail_covs <- list(betadiv = data.frame(data = matrix(rep(site_covs$betadiv, each = total_frogs), nrow = ponds, ncol = total_frogs, byrow = T)),
                    alpha = data.frame(data = matrix(rep(site_covs$alpha, each = total_frogs), nrow = ponds, ncol = total_frogs, byrow = T)),
-                   R0P = data.frame(data = matrix(rep(site_covs$R0P, each = total_frogs), nrow = ponds, ncol = total_frogs, byrow = T)),
-                   Spp = Spp) 
+                   R0P = data.frame(data = matrix(rep(site_covs$R0P, each = total_frogs), nrow = ponds, ncol = total_frogs, byrow = T))) 
 names(avail_covs$R0P) <- c("Ind1","Ind2","Ind3","Ind4","Ind5","Ind6")
 Spp_dets <- NULL
 for(i in 1:ncol(Spp)){
@@ -102,21 +100,41 @@ umf <- unmarkedFrameGOccu(y = det, siteCovs = site_covs, obsCovs = test_covs, ye
 head(umf)
 simulate(umf, model = goccu,  psiformula = ~betadiv, phiformula =~ Spp, pformula =~ alpha)
 coeff <- list(psi = c(0,-0.7), 
-              phi = c(0,-0.9,0.9,0.5), 
+              phi = c(0,-0.9,0.8,0.5), 
               det = c(0,0.75))
 sim2 <- simulate(umf, model = goccu,  psiformula = ~betadiv, phiformula = ~Spp, pformula =~ alpha, coefs = coeff)
 
-
-
+#null model
 null.mod <- goccu(psiformula = ~1, phiformula = ~1, pformula = ~1,data = sim2[[1]])
+#Models for psi
 psi.beta <- goccu(psiformula = ~betadiv, phiformula = ~1, pformula = ~1, data = sim2[[1]])
 psi.alpha <- goccu(psiformula = ~alpha, phiformula = ~1, pformula =~ 1, data = sim2[[1]])
 psi.R0P <- goccu(psiformula = ~R0P, phiformula = ~1, pformula =~ 1, data = sim2[[1]])
 
-fitlist <- fitList("nullpsi" = null.mod,
+fitlist.psi <- fitList("nullpsi" = null.mod,
                    "betapsi" = psi.beta,
                    "alphapsi" = psi.alpha,
                    "R0Ppsi" = psi.R0P)
 
-modSel(fitlist)
+modSel(fitlist.psi)
 summary(psi.beta)
+
+#Models for theta
+theta.beta <- goccu(psiformula = ~1, phiformula = ~betadiv, pformula = ~1, data = sim2[[1]])
+theta.alpha <- goccu(psiformula = ~1, phiformula = ~alpha, pformula = ~1, data = sim2[[1]])
+theta.R0P <- goccu(psiformula = ~1, phiformula = ~R0P, pformula = ~1, data = sim2[[1]])
+theta.spp <- goccu(psiformula = ~1, phiformula = ~Spp, pformula = ~1, data = sim2[[1]])
+
+fitlist.theta <- fitList("beta" = theta.beta,
+                         "alpha" = theta.alpha,
+                         "R0P" = theta.R0P,
+                         "Spp" = theta.spp)
+modSel(fitlist.theta)
+
+###########################################################################################
+# Creating actual simulations based on potential hypotheses
+##########################################################################################
+
+### First we'll need to create a full dataframe of psi, theta, and p covariates
+
+#Theta

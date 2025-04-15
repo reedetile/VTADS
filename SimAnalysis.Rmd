@@ -1,0 +1,146 @@
+---
+title: "SimulatedAnalysis"
+author: "Reed Scott"
+date: "2025-02-06"
+output: html_document
+---
+
+# Introduction
+
+Hello Brittany!
+
+I have been working on some simulated analysis for VTADs. The goal was to simulate data similar to what we're trying to do 
+with VTADs, so that when we finally get results we can almost immediately plug and play. This does require some discussion of
+what our hypotheses will be, which I discuss in an
+earlier doc I sent (Hypotheses.docx). I think that that will help inform the full model set we will build for this project
+but for right now I wanted to create a simulated dataset and compare a few simple models.
+
+I have choosen to simulate a single season occupancy model, and I have choosen to work in unmarked. My reasoning for a single
+season is that for our real data, while we have multiple seasons it's only two years and seperated by a missing year of data.
+So, I am suggesting we run 2 single season models. I want to work in unmarked because 1) I think it's good professional
+development to learn the multiple ways of doing ecological modeling and 2) I think unmarked is a bit easier to work with for
+smaller model sets.
+
+With all this in mind, let's look at the simulation I did
+
+# Building the simulated data
+
+The first thing I wanted to do was set the parameters that would define our data. In this simulation I chose to use 24 ponds
+as our number of sites. I simulated 3 visits, and 3 tests. However, unmarked couldn't handle 108 tests (12 * 3 * 3) for
+simulation purposes, so instead of having 12 frogs per survey I only had 2 (so 18 total tests). With these paramters in place
+we can form our detection matrix, which ends up being 24x18 like we would expect.
+
+```{r Init params + det matrix}
+#Initialize -----------------------------------------
+rm(list=ls())
+library(unmarked)
+library(MuMIn)
+library(ggplot2)
+# Load functions--------------------------------------
+
+
+# Global Variables-------------------------------------
+
+
+# Program Body------------------------------------------
+# Initialize variables
+set.seed(1234)
+ponds <- 24 #number of sites
+frogs <- 2 #number of frogs PER VISIT
+visits <- 3 #number of visits to each site
+tests <- 3 #number of tests per frog
+total_frogs <- frogs*visits
+total_tests <- frogs*visits*tests #total number of tests for each pond for the season
+
+# Create an empty dataframe for the detection data
+det <- matrix(NA, nrow = ponds, ncol = total_tests)
+```
+
+Now the goal is to populate this empty dataframe based on covariates that effect $\psi$, $\theta$, and p. To do this in unmarked you need to
+create seperate objects for the site covariates, availability covariates, and observation covariates. I am going to spare you the code for the
+moment, but I did want to take this opporunity to reiterate my hypotheses at the moment. I have hypotheses that $\psi$ will be negatively 
+correlated with $\beta$ and $\alpha$, and positively correlated with $R_{0P}$. For $\theta$ I believe the relationships with $\beta$, $\alpha$,
+and $R_{0P}$ to be the same, but adding in an effect of Host Species ID. The hypotheses for p are all the same as for $\theta$.
+
+```{r Covar setup, echo = FALSE}
+site_covs <- data.frame(betadiv = rnorm(ponds),
+                        alpha = rnorm(ponds),
+                        R0P = rnorm(ponds))
+Spp <-  data.frame(matrix(sample(c("Spp1","Spp2","Spp3","Spp4"), size = total_frogs*ponds, replace = T), nrow = ponds, ncol = total_frogs))
+Spp <-  data.frame(lapply(Spp,as.factor))
+
+avail_covs <- list(betadiv = data.frame(data = matrix(rep(site_covs$betadiv, each = total_frogs), nrow = ponds, ncol = total_frogs, byrow = T)),
+                   alpha = data.frame(data = matrix(rep(site_covs$alpha, each = total_frogs), nrow = ponds, ncol = total_frogs, byrow = T)),
+                   R0P = data.frame(data = matrix(rep(site_covs$R0P, each = total_frogs), nrow = ponds, ncol = total_frogs, byrow = T)),
+                   Spp = Spp) 
+names(avail_covs$R0P) <- c("Ind1","Ind2","Ind3","Ind4","Ind5","Ind6")
+Spp_dets <- NULL
+for(i in 1:ncol(Spp)){
+  Spp_temp <- matrix(rep(Spp[,i], each = tests), nrow = ponds, ncol = tests, byrow = T)
+  Spp_dets <- cbind(Spp_dets, Spp_temp)
+}
+Spp_dets <- data.frame(lapply(data.frame(Spp_dets),as.factor))    
+    
+test_covs <- list(betadiv = data.frame(data = matrix(rep(site_covs$betadiv, each = total_tests), nrow = ponds, ncol = total_tests, byrow = T)),
+                  alpha = data.frame(data = matrix(rep(site_covs$alpha, each = total_tests), nrow = ponds, ncol = total_tests, byrow = T)),
+                  R0P = data.frame(data = matrix(rep(site_covs$R0P, each = total_tests), nrow = ponds, ncol = total_tests, byrow = T)),
+                  Spp = Spp_dets)
+for(i in 1:length(test_covs)){
+  for (j in 1:ncol(test_covs$betadiv)){
+    names(test_covs[[i]])[[j]] <- paste("test",i, sep = "")
+  }
+}
+```
+
+With the covariates simulated, we're now ready to create and unmarkedFrame object and simulate detection data based on our covariates. In this example, I simulated a negative effect of $\beta$ on $\psi$, a Species effect on $\theta$, and an effect of $\alpha$ on p. 
+
+```{r Make umf + sim data}
+umf <- unmarkedFrameGOccu(y = det, siteCovs = site_covs, obsCovs = test_covs, yearlySiteCovs = avail_covs, numPrimary = total_frogs)
+coeff <- list(psi = c(0,-5), 
+              phi = c(0,-0.9,0.8,0.5), 
+              det = c(0,0.75))
+sim2 <- simulate(umf, model = goccu,  psiformula = ~betadiv, phiformula = ~Spp, pformula =~ alpha, coefs = coeff)
+```
+
+And just like that we've simulated some data! But does it work? We can check using the goccu function. In a simple example below, I fit a null model and three models for the variables effecting $\psi$. If the simulation worked correctly, then psi.beta should be the top model.
+
+```{r Create + fit models}
+#null model
+null.mod <- goccu(psiformula = ~1, phiformula = ~1, pformula = ~1,data = sim2[[1]])
+#Models for psi
+psi.beta <- goccu(psiformula = ~betadiv, phiformula = ~1, pformula = ~1, data = sim2[[1]])
+psi.alpha <- goccu(psiformula = ~alpha, phiformula = ~1, pformula =~ 1, data = sim2[[1]])
+psi.R0P <- goccu(psiformula = ~R0P, phiformula = ~1, pformula =~ 1, data = sim2[[1]])
+
+fitlist.psi <- fitList("nullpsi" = null.mod,
+                   "betapsi" = psi.beta,
+                   "alphapsi" = psi.alpha,
+                   "R0Ppsi" = psi.R0P)
+
+modSel(fitlist.psi)
+```
+
+And it is! 
+
+We can check the same thing for $\theta$, and this should show that the top model includes an affect of species:
+
+```{r Theta mods}
+#Models for theta
+theta.beta <- goccu(psiformula = ~1, phiformula = ~betadiv, pformula = ~1, data = sim2[[1]])
+theta.alpha <- goccu(psiformula = ~1, phiformula = ~alpha, pformula = ~1, data = sim2[[1]])
+theta.R0P <- goccu(psiformula = ~1, phiformula = ~R0P, pformula = ~1, data = sim2[[1]])
+theta.spp <- goccu(psiformula = ~1, phiformula = ~Spp, pformula = ~1, data = sim2[[1]])
+
+fitlist.theta <- fitList("beta" = theta.beta,
+                         "alpha" = theta.alpha,
+                         "R0P" = theta.R0P,
+                         "Spp" = theta.spp)
+modSel(fitlist.theta)
+```
+
+This indicates that the simulation worked and the models are behaving as expected.
+
+# Conclusion + next steps
+
+I think this indicates that we can feasibly use unmarked for VTADs. I think that we need to have a discussion about what our hypotheses are
+and then this will inform what models we would like to test.
