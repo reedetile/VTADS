@@ -2,7 +2,7 @@
 title: "SimulatedAnalysis"
 author: "Reed Scott"
 date: "2025-02-06"
-output: html_document
+output: word_document
 ---
 
 # Introduction
@@ -27,7 +27,7 @@ With all this in mind, let's look at the simulation I did
 
 The first thing I wanted to do was set the parameters that would define our data. In this simulation I chose to use 24 ponds
 as our number of sites. I simulated 3 visits, and 3 tests. However, unmarked couldn't handle 108 tests (12 * 3 * 3) for
-simulation purposes, so instead of having 12 frogs per survey I only had 2 (so 18 total tests). With these paramters in place
+simulation purposes, so instead of having 12 frogs per survey I only had 2 (so 18 total tests). With these parameters in place
 we can form our detection matrix, which ends up being 24x18 like we would expect.
 
 ```{r Init params + det matrix}
@@ -37,7 +37,8 @@ library(unmarked)
 library(MuMIn)
 library(ggplot2)
 # Load functions--------------------------------------
-
+repo <- getwd()
+graphs <- paste(repo, "/Graphs", sep = "")
 
 # Global Variables-------------------------------------
 
@@ -56,35 +57,37 @@ total_tests <- frogs*visits*tests #total number of tests for each pond for the s
 det <- matrix(NA, nrow = ponds, ncol = total_tests)
 ```
 
-Now the goal is to populate this empty dataframe based on covariates that effect $\psi$, $\theta$, and p. To do this in unmarked you need to
-create seperate objects for the site covariates, availability covariates, and observation covariates. I am going to spare you the code for the
-moment, but I did want to take this opporunity to reiterate my hypotheses at the moment. I have hypotheses that $\psi$ will be negatively 
-correlated with $\beta$ and $\alpha$, and positively correlated with $R_{0P}$. For $\theta$ I believe the relationships with $\beta$, $\alpha$,
-and $R_{0P}$ to be the same, but adding in an effect of Host Species ID. The hypotheses for p are all the same as for $\theta$.
+Now the goal is to populate this empty dataframe based on covariates that effect $\psi$, $\theta$, and p. To do this in 
+unmarked you need to create seperate objects for the site covariates, availability covariates, and observation covariates. I 
+am going to spare you the code for the moment, but I did want to take this opporunity to reiterate my hypotheses at the 
+moment. I have hypotheses that $\psi$ will be negatively correlated with $\beta$ and $\alpha$, and positively correlated with 
+$R_{0P}$. For $\theta$ I believe the relationships with $\beta$, $\alpha$, and $R_{0P}$ to be the same, but adding in an 
+effect of Host Species ID. The hypotheses for p are all the same as for $\theta$.
 
 ```{r Covar setup, echo = FALSE}
+# Create a site lvl covar
 site_covs <- data.frame(betadiv = rnorm(ponds),
-                        alpha = rnorm(ponds),
-                        R0P = rnorm(ponds))
-Spp <-  data.frame(matrix(sample(c("Spp1","Spp2","Spp3","Spp4"), size = total_frogs*ponds, replace = T), nrow = ponds, ncol = total_frogs))
-Spp <-  data.frame(lapply(Spp,as.factor))
+                        alpha = rnorm(ponds))
+beta <- rnorm(ponds)
+beta_effect <-  data.frame(matrix(rep(beta, each = total_frogs), nrow = ponds, ncol = total_frogs, byrow = T))
 
-avail_covs <- list(betadiv = data.frame(data = matrix(rep(site_covs$betadiv, each = total_frogs), nrow = ponds, ncol = total_frogs, byrow = T)),
-                   alpha = data.frame(data = matrix(rep(site_covs$alpha, each = total_frogs), nrow = ponds, ncol = total_frogs, byrow = T)),
-                   R0P = data.frame(data = matrix(rep(site_covs$R0P, each = total_frogs), nrow = ponds, ncol = total_frogs, byrow = T)),
-                   Spp = Spp) 
-names(avail_covs$R0P) <- c("Ind1","Ind2","Ind3","Ind4","Ind5","Ind6")
-Spp_dets <- NULL
-for(i in 1:ncol(Spp)){
-  Spp_temp <- matrix(rep(Spp[,i], each = tests), nrow = ponds, ncol = tests, byrow = T)
-  Spp_dets <- cbind(Spp_dets, Spp_temp)
+avail_covs <- list(betadiv = data.frame(data = matrix(rep(site_covs$betadiv, each = total_frogs),
+                                                      nrow = ponds, ncol = total_frogs, byrow = T)),
+                   alpha = data.frame(data = matrix(rep(site_covs$alpha, each = total_frogs), 
+                                                    nrow = ponds, ncol = total_frogs, byrow = T))) 
+names(avail_covs$betadiv) <- c("Ind1","Ind2","Ind3","Ind4","Ind5","Ind6")
+beta_dets <- NULL
+for(i in 1:ncol(beta_effect)){
+  beta_temp <- matrix(rep(beta_effect[,i], each = tests), nrow = ponds, ncol = tests, byrow = T)
+  beta_dets <- cbind(beta_dets, beta_temp)
 }
-Spp_dets <- data.frame(lapply(data.frame(Spp_dets),as.factor))    
+theta_dets <- data.frame(beta_dets)    
     
-test_covs <- list(betadiv = data.frame(data = matrix(rep(site_covs$betadiv, each = total_tests), nrow = ponds, ncol = total_tests, byrow = T)),
-                  alpha = data.frame(data = matrix(rep(site_covs$alpha, each = total_tests), nrow = ponds, ncol = total_tests, byrow = T)),
-                  R0P = data.frame(data = matrix(rep(site_covs$R0P, each = total_tests), nrow = ponds, ncol = total_tests, byrow = T)),
-                  Spp = Spp_dets)
+test_covs <- list(betadiv = data.frame(data = matrix(rep(site_covs$betadiv, each = total_tests), 
+                                                     nrow = ponds, ncol = total_tests, byrow = T)),
+                  alpha = data.frame(data = matrix(rep(site_covs$alpha, each = total_tests), 
+                                                   nrow = ponds, ncol = total_tests, byrow = T)),
+                  beta_dets = beta_dets)
 for(i in 1:length(test_covs)){
   for (j in 1:ncol(test_covs$betadiv)){
     names(test_covs[[i]])[[j]] <- paste("test",i, sep = "")
@@ -92,14 +95,15 @@ for(i in 1:length(test_covs)){
 }
 ```
 
-With the covariates simulated, we're now ready to create and unmarkedFrame object and simulate detection data based on our covariates. In this example, I simulated a negative effect of $\beta$ on $\psi$, a Species effect on $\theta$, and an effect of $\alpha$ on p. 
+With the covariates simulated, we're now ready to create and unmarkedFrame object and simulate detection data based on our covariates. In this example, I simulated a negative effect of $\beta$ on $\psi$ and $\theta$, and an effect of $\alpha$ on p. 
 
-```{r Make umf + sim data}
-umf <- unmarkedFrameGOccu(y = det, siteCovs = site_covs, obsCovs = test_covs, yearlySiteCovs = avail_covs, numPrimary = total_frogs)
-coeff <- list(psi = c(0,-5), 
-              phi = c(0,-0.9,0.8,0.5), 
-              det = c(0,0.75))
-sim2 <- simulate(umf, model = goccu,  psiformula = ~betadiv, phiformula = ~Spp, pformula =~ alpha, coefs = coeff)
+```{r Make umf + sim data, message=FALSE}
+umf <- unmarkedFrameGOccu(y = det, siteCovs = site_covs, obsCovs = test_covs, yearlySiteCovs = avail_covs, 
+                          numPrimary = total_frogs)
+coeff <- list(psi = c(0,-0.7), 
+              phi = c(0,-0.9), 
+              det = c(0,-0.75))
+sim2 <- simulate(umf, model = goccu,  psiformula = ~betadiv, phiformula = ~betadiv, pformula =~ alpha, coefs = coeff)
 ```
 
 And just like that we've simulated some data! But does it work? We can check using the goccu function. In a simple example below, I fit a null model and three models for the variables effecting $\psi$. If the simulation worked correctly, then psi.beta should be the top model.
@@ -110,12 +114,10 @@ null.mod <- goccu(psiformula = ~1, phiformula = ~1, pformula = ~1,data = sim2[[1
 #Models for psi
 psi.beta <- goccu(psiformula = ~betadiv, phiformula = ~1, pformula = ~1, data = sim2[[1]])
 psi.alpha <- goccu(psiformula = ~alpha, phiformula = ~1, pformula =~ 1, data = sim2[[1]])
-psi.R0P <- goccu(psiformula = ~R0P, phiformula = ~1, pformula =~ 1, data = sim2[[1]])
 
 fitlist.psi <- fitList("nullpsi" = null.mod,
                    "betapsi" = psi.beta,
-                   "alphapsi" = psi.alpha,
-                   "R0Ppsi" = psi.R0P)
+                   "alphapsi" = psi.alpha)
 
 modSel(fitlist.psi)
 ```
@@ -125,22 +127,37 @@ And it is!
 We can check the same thing for $\theta$, and this should show that the top model includes an affect of species:
 
 ```{r Theta mods}
-#Models for theta
 theta.beta <- goccu(psiformula = ~1, phiformula = ~betadiv, pformula = ~1, data = sim2[[1]])
 theta.alpha <- goccu(psiformula = ~1, phiformula = ~alpha, pformula = ~1, data = sim2[[1]])
-theta.R0P <- goccu(psiformula = ~1, phiformula = ~R0P, pformula = ~1, data = sim2[[1]])
-theta.spp <- goccu(psiformula = ~1, phiformula = ~Spp, pformula = ~1, data = sim2[[1]])
 
-fitlist.theta <- fitList("beta" = theta.beta,
-                         "alpha" = theta.alpha,
-                         "R0P" = theta.R0P,
-                         "Spp" = theta.spp)
+fitlist.theta <- fitList("null" = null.mod,
+                         "beta" = theta.beta,
+                         "alpha" = theta.alpha)
 modSel(fitlist.theta)
 ```
 
-This indicates that the simulation worked and the models are behaving as expected.
+This indicates that the simulation worked and the models are behaving as expected. But let's check p just to be sure
+
+```{r p mods}
+p.beta <- goccu(psiformula = ~1, phiformula = ~1, pformula = ~betadiv, data = sim2[[1]])
+p.alpha <- goccu(psiformula = ~1, phiformula = ~1, pformula = ~alpha, data = sim2[[1]])
+
+fitlist.theta <- fitList("null" = null.mod,
+                         "beta" = p.beta,
+                         "alpha" = p.alpha)
+modSel(fitlist.theta)
+```
+
+# Graphing
+
+I have put more thought in to what plots I would like to include in this project. I envision the final paper having two main 
+figures, each with 6 panels: 1 figure for RV results and 1 figure for BD. Each panel will show the effect of $\alpha$ or 
+$\beta$ on $\psi$, $\theta$, or $p$. Additionally, each plot will have two lines: one for the 2022 data and one for the 2024 
+data. I have included an example figure to show what I mean (although this only includes 1 line, not the 2 years of data).
+
+```{r Fig, echo = FALSE, message = FALSE}
+knitr::include_graphics(path = "biodivPlots.png")
+```
 
 # Conclusion + next steps
-
-I think this indicates that we can feasibly use unmarked for VTADs. I think that we need to have a discussion about what our hypotheses are
-and then this will inform what models we would like to test.
+I have determined that, as of right now, we have 27 possible models to explore. I have provided a few short + easy examples of how this can be implemented in unmarked. I now have a vision for structure I would like for our results section. I think at this point I could pretty easily write out a script to have ready to go. I think the next big step is just getting the data.
