@@ -42,4 +42,7 @@ dipnet_sum <- dipnet2 %>% group_by(ComplexID, PondID, SiteID) %>% dplyr::summari
                                                                       SP = sum(SP),
                                                                       WF = sum(WF),
                                                                       RSN = sum(RSN))
-dipnet_longer <- dipnet_sum %>% pivot_longer(                                                                
+dipnet_longer <- dipnet_sum %>% pivot_longer(cols = AB:RSN, names_to = "Species")                                                                
+ggplot(dipnet_longer, mapping = aes(x = Species, y = value))+
+  geom_bar(stat = "summary")+
+  theme_classic()
