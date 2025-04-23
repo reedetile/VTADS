@@ -4,6 +4,7 @@
 #Initialize -----------------------------------------
 rm(list=ls())
 library(unmarked)
+library(tidyverse)
 # Load functions--------------------------------------
 
 
@@ -12,11 +13,13 @@ repo <- getwd()
 graphs <- paste(repo, "/Graphs", sep = "")
 
 # Program Body------------------------------------------
+
 # General variables
 set.seed(1234)
 ponds <- 24 #number of sites
 frogs <- 2 #number of frogs PER VISIT
 visits <- 3 #number of visits to each site
+theta <- seq(0.1,0.9, by = 0.1)
 #BD vars
 psi_bd <- log(0.5/(1-0.5))
 theta_bd <- log(0.5/(1-0.5))
@@ -41,9 +44,38 @@ det_bd <- matrix(NA, nrow = ponds, ncol = total_tests)
 umf <- unmarkedFrameGOccu(y = det_bd, numPrimary = total_frogs)
 head(umf)
 simulate(umf, model = goccu,  psiformula = ~1, phiformula =~ 1, pformula =~ 1)
+
+sims <- vector("list",length = length(theta))
+for (i in 1:length(theta)) {
+  theta_i <- log(theta[[i]]/(1 - theta[[i]]))
+  coeff <- list(psi = psi_bd,
+                phi = theta_i,
+                det = p_bd,
+                det = p_bd)
+  sim <- simulate(umf, 
+                  model = goccu,  
+                  psiformula = ~1, 
+                  phiformula = ~1, 
+                  pformula =~ 1,
+                  coefs = coeff)
+  
+  sims[[i]] <- sim
+
+}
+prev_triplicate <- data.frame(matrix(nrow = length(sims), ncol = 2))
+names(prev_triplicate) <- c("Prev","beta")
+for(i in 1:length(sims)){
+  triplicate <- goccu(psiformula = ~1, phiformula = ~1, pformula =~ 1, data = sims[[i]][[1]])
+  prev_triplicate[i,2] <- summary(triplicate)[[2]]$Estimate
+  prev_triplicate[i,1] <- theta[[i]]
+}
+prev_triplicate$est <- plogis(prev_triplicate$beta)
+prev_triplicate$error <- abs(prev_triplicate$Prev - prev_triplicate$est)
+
 coeff <- list(psi = psi_bd, 
               phi = theta_bd, 
               det = p_bd)
+
 sim <- simulate(umf, 
                 model = goccu,  
                 psiformula = ~1, 
@@ -73,6 +105,37 @@ det_bd <- matrix(NA, nrow = ponds, ncol = total_tests)
 umf <- unmarkedFrameGOccu(y = det_bd, numPrimary = total_frogs)
 head(umf)
 simulate(umf, model = goccu,  psiformula = ~1, phiformula =~ 1, pformula =~ 1)
+
+sims <- vector("list",length = length(theta))
+for (i in 1:length(theta)) {
+  theta_i <- log(theta[[i]]/(1 - theta[[i]]))
+  coeff <- list(psi = psi_bd,
+                phi = theta_i,
+                det = p_bd,
+                det = p_bd)
+  sim <- simulate(umf, 
+                  model = goccu,  
+                  psiformula = ~1, 
+                  phiformula = ~1, 
+                  pformula =~ 1,
+                  coefs = coeff)
+  
+  sims[[i]] <- sim
+  
+}
+prev_duplicate <- data.frame(matrix(nrow = length(sims), ncol = 2))
+names(prev_duplicate) <- c("Prev","beta")
+for(i in 1:length(sims)){
+  duplicate <- goccu(psiformula = ~1, phiformula = ~1, pformula =~ 1, data = sims[[i]][[1]])
+  prev_duplicate[i,2] <- summary(duplicate)[[2]]$Estimate
+  prev_duplicate[i,1] <- theta[[i]]
+}
+prev_duplicate$est <- plogis(prev_duplicate$beta)
+prev_duplicate$error <- abs(prev_duplicate$Prev - prev_duplicate$est)
+
+
+
+
 coeff <- list(psi = psi_bd, 
               phi = theta_bd, 
               det = p_bd)
@@ -104,6 +167,39 @@ det_bd <- matrix(NA, nrow = ponds, ncol = total_tests)
 # Create a site lvl covar
 # Note including any occ, prev, or det covars... yet
 umf <- unmarkedFrameGOccu(y = det_bd, numPrimary = total_frogs)
+
+sims <- vector("list",length = length(theta))
+for (i in 1:length(theta)) {
+  theta_i <- log(theta[[i]]/(1 - theta[[i]]))
+  coeff <- list(psi = psi_bd,
+                phi = theta_i,
+                det = p_bd,
+                det = p_bd)
+  sim <- simulate(umf, 
+                  model = goccu,  
+                  psiformula = ~1, 
+                  phiformula = ~1, 
+                  pformula =~ 1,
+                  coefs = coeff)
+  
+  sims[[i]] <- sim
+  
+}
+prev_single <- data.frame(matrix(nrow = length(sims), ncol = 2))
+names(prev_single) <- c("Prev","beta")
+for(i in 1:length(sims)){
+  single <- goccu(psiformula = ~1, phiformula = ~1, pformula =~ 1, data = sims[[i]][[1]])
+  prev_single[i,2] <- summary(single)[[2]]$Estimate
+  prev_single[i,1] <- theta[[i]]
+}
+prev_single$est <- plogis(prev_single$beta)
+prev_single$error <- abs(prev_single$Prev - prev_single$est)
+
+
+
+
+
+
 head(umf)
 simulate(umf, model = goccu,  psiformula = ~1, phiformula =~ 1, pformula =~ 1)
 coeff <- list(psi = psi_bd, 
@@ -250,3 +346,10 @@ plogis(mean(det_single$Det)) # 0.62 prob
 
 # Again, can drop to duplicate without loss of info
 # Single will result in lost of info
+
+
+# comparison of prevalence errors
+prev_comp <- data.frame(Prev = prev_triplicate$Prev, 
+                        Triplicate = prev_triplicate$error,
+                        Duplicate = prev_duplicate$error,
+                        Single = prev_single$error)
