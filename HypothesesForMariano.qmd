@@ -1,0 +1,38 @@
+---
+title: "HypothesesForMariano"
+format: docx
+editor: visual
+---
+
+Hi Mariano,
+
+I lied a little bit. I looked at the hypothesis document I had, and honestly don't like it because a lot of my hypotheses have had to change or be adjusted. So I'm writing a new, clean document for you. First, some background. I am trying to answer the broad question, "How does diversity in the array of community types within a meta-community affect disease dynamics?" with the hypothesis that as biodiversity increases diseases risk should generally decrease. I had more specific hypotheses which I'll get into in a minute.
+
+First, I want to remind you of the actually study design. I had ponds in groups of either 1,2, or 3 [@fig-ponds]. I surveyed what amphibians were present in the system through a variety of methods. I also captured green frogs and swabbed them to test for diseases (the lab work Lilo and I are currently doing).
+
+I have a couple different hypotheses depending on the scale: we are exploring the occupancy of each disease ($\psi$) , prevalence ($\theta$) , and infection intensity (p). My hypotheses are outlined in @tbl-hypotheses .
+
+The problem: I had originally planned to measure $\beta$ within a group of ponds. However, you can't measure $\beta$ for a pond if it occurs by itself. I don't want to exclude those ponds that are isolated because that's a lot of data and it could still be interesting. I'm thinking of measuring $\beta$ by comparing a pond to all other ponds in the study, and I hypothesize that $\beta$ will be correlated with the number of ponds in the group.
+
+That's what I'm kind of stuck on at the moment. Any thoughts you have would be really helpful.
+
+Thanks,
+
+Reed
+
+| Parameter | Covariate | Hypothesis |
+|----|----|----|
+| $\psi$ | $\alpha$ | when diversity is high disease occupancy should be low |
+|  | $\beta$ | when diversity is high disease occupancy should be low |
+| $\theta$ | $\alpha$ | when diversity is high disease prevalence should be low |
+|  | $\beta$ | when diversity is high disease prevalence should be low |
+| $p$ | $\alpha$ | when diversity is high infection intensity should be low |
+|  | $\beta$ | when diversity is high infection intensity should be low |
+
+: Hypotheses for the relationship between disease risk ($\psi , \theta$ , or p ) and diversity ($\beta$ or $\alpha$). {#tbl-hypotheses}
+
+```{r PondDesign, echo=FALSE,message=FALSE}
+#| label: fig-ponds
+#| fig-cap: "Ponds were either isolated (top), in pairs (middle), or in groups of three or more (bottom)."
+knitr::include_graphics("PondDesign.png")
+```
