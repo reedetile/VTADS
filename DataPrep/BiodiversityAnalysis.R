@@ -10,9 +10,12 @@ library(dplyr)
 library(tidyr)
 
 # Global Variables-------------------------------------
-repo <- getwd()
+repo <- "C:/Users/rcscott/VTADS"
+data <- "C:/Users/rcscott/VTADS/Data"
 graphs <- paste(repo,'/Graphs', sep ="")
-load("biodiversityData.RData")
+
+setwd(data)
+load("PresenceAbsenceData.RData")
 
 # Program Body------------------------------------------
 
@@ -113,7 +116,7 @@ for (i in 1:max(PA_2022$ComplexID)) {
     visit <- as.character(j)
     metacomm <- PA_2022 %>% filter(ComplexID == Complex & Visit == visit)
     betadiv <- mean(vegdist(metacomm[,7:ncol(metacomm)], binary =T))
-    detadiv <- rep(betadiv, nrow(metacomm))
+    betadiv <- rep(betadiv, nrow(metacomm))
     PA_2022[PA_2022$ComplexID == Complex & PA_2022$Visit == visit,6] <- betadiv
   }
 }
@@ -134,24 +137,31 @@ for (i in 1:max(PA_2024$ComplexID)) {
 
 # My opinion based on the 6 DF's.  I get a lot of warnings for the VES + dipnet DF's b/c there are a lot of cases where nothing was detected
 # I think that only useful info is the overall P/A data (PA_2022 and PA_2024). So until I here otherwise I'm only moving forward with that
-
+PA_2022[is.nan(PA_2022$beta),6] <- 0
 Diversity_2022 <- PA_2022 %>% 
   select(ComplexID:beta) %>% 
   pivot_wider(names_from = Visit, values_from = c(beta, alpha)) 
+
+PA_2024[is.nan(PA_2024$beta),6] <- 0
 Diversity_2024 <- PA_2024 %>%
   select(ComplexID:beta) %>%
   pivot_wider(names_from = Visit, values_from = c(beta, alpha)) 
 
-visit1 <- PA_2022 %>% filter(Visit == "1")
-vegdist(visit1[, 7:17])
+setwd(data)
+save(Diversity_2022,
+     Diversity_2024,
+     file = "biodiversityData.RData")
+
+# visit1 <- PA_2022 %>% filter(Visit == "1")
+# vegdist(visit1[, 7:17])
 
 
-# What if instead of measuring beta diversity within meta comms we just compared beta of all ponds in a given survey period
-PA_2022$beta <- NA
-for (i in 1:visits) {
-  visit <- as.character(j)
-  visit_data <- PA_2022 %>% filter(Visit == visit) #this subsets to just a particular visit / sampling period
-  betadiv <- mean(betadiver(visit_data[,7:ncol(metacomm)], binary =T))
-  
-  
-}
+# # What if instead of measuring beta diversity within meta comms we just compared beta of all ponds in a given survey period
+# PA_2022$beta <- NA
+# for (i in 1:visits) {
+#   visit <- as.character(j)
+#   visit_data <- PA_2022 %>% filter(Visit == visit) #this subsets to just a particular visit / sampling period
+#   betadiv <- mean(betadiver(visit_data[,7:ncol(metacomm)], binary =T))
+#   
+#   
+# }

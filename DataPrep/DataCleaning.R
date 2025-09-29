@@ -348,6 +348,8 @@ PA_2024 <- bind_rows(dipnet_2024_PA,VES_2024_PA) %>%
   summarize(across(everything(), sum))
 
 PA_2024[,-c(1:4)] <- (PA_2024[,-c(1:4)] != 0)*1
+
+
 # Yay now I have 6 DF's that can be used to assess biodiversity
 dipnet_2022_PA #Dipnet data for 2022
 dipnet_2024_PA #dipnet data for 2024
@@ -362,6 +364,6 @@ save(dipnet_2022_PA, #Dipnet data for 2022
      VES_2024_PA, # VES data for 2024
      PA_2022, # Overall data for 2022
      PA_2024, # Overall data for 2024
-     file = "biodiversityData.RData")
+     file = "PresenceAbsenceData.RData")
 
 # End script     

@@ -14,7 +14,7 @@ library(stringr)
 
 
 # Global Variables-------------------------------------
-repo <- "D:/gitrepos/VTADS"
+repo <- 'C:/Users/rcscott/VTADS'
 TempData <- paste(repo,"/TemperatureData", sep = "")
 
 # Program Body------------------------------------------
@@ -168,10 +168,13 @@ SumTempData <- SumTempData %>% mutate_all(~ifelse(is.nan(.), NA, .))
 colnames(SumTempData)[1] <- "SiteID"
 TempData_2022 <- SumTempData %>% filter(Year == "2022")
 TemData2022_OccMod <- TempData_2022 %>% pivot_wider(names_from = Survey, values_from = mean_temp)
-
+LastRow <- c("06-02",rep(NA, 4)) #need to add in dumby row for 06-02
+TemData2022_OccMod <- rbind(TemData2022_OccMod, LastRow)
 
 TempData_2024 <- SumTempData %>% filter(Year == "2024")
 TemData2024_OccMod <- TempData_2024 %>% pivot_wider(names_from = Survey, values_from = mean_temp)
+LastRow <- c("06-02",rep(NA, 4)) #need to add in dumby row for 06-02
+TemData2024_OccMod <- rbind(TemData2024_OccMod, LastRow)
 
 setwd(paste(repo, "/Data", sep = ""))
 save(TemData2022_OccMod, TemData2024_OccMod, file = "TempDataOccMod.RData")
