@@ -19,6 +19,7 @@ load("PresenceAbsenceData.RData")
 
 # Program Body------------------------------------------
 
+
 # Let's start with the easy thing: measuring alpha diversity at each survey
 # Alpha diversity
 #dipnet
@@ -107,45 +108,110 @@ for (i in 1:max(VES_2024_PA$ComplexID)) {
 }
 
 # Overall
-# 2022
+# # 2022
+# PA_2022$beta <- NA
+# PA_2022 <-  relocate(PA_2022, beta, .after = alpha)
+# for (i in 1:max(PA_2022$ComplexID)) {
+#   for (j in 1:visits) {
+#     Complex <- as.character(i)
+#     visit <- as.character(j)
+#     metacomm <- PA_2022 %>% filter(ComplexID == Complex & Visit == visit)
+#     betadiv <- mean(vegdist(metacomm[,7:ncol(metacomm)], binary =T))
+#     betadiv <- rep(betadiv, nrow(metacomm))
+#     PA_2022[PA_2022$ComplexID == Complex & PA_2022$Visit == visit,6] <- betadiv
+#   }
+# }
+# 
+# # 2024
+# PA_2024$beta <- NA
+# PA_2024 <-  relocate(PA_2024, beta, .after = alpha)
+# for (i in 1:max(PA_2024$ComplexID)) {
+#   for (j in 1:visits) {
+#     Complex <- as.character(i)
+#     visit <- as.character(j)
+#     metacomm <- PA_2024 %>% filter(ComplexID == Complex & Visit == visit)
+#     betadiv <- mean(vegdist(metacomm[,7:ncol(metacomm)], binary =T))
+#     detadiv <- rep(betadiv, nrow(metacomm))
+#     PA_2024[PA_2024$ComplexID == Complex & PA_2024$Visit == visit,6] <- betadiv
+#   }
+# }
+# 
+# # My opinion based on the 6 DF's.  I get a lot of warnings for the VES + dipnet DF's b/c there are a lot of cases where nothing was detected
+# # I think that only useful info is the overall P/A data (PA_2022 and PA_2024). So until I here otherwise I'm only moving forward with that
+# PA_2022[is.nan(PA_2022$beta),6] <- 0
+# Diversity_2022 <- PA_2022 %>% 
+#   select(ComplexID:beta) %>% 
+#   pivot_wider(names_from = Visit, values_from = c(beta, alpha)) 
+# 
+# PA_2024[is.nan(PA_2024$beta),6] <- 0
+# Diversity_2024 <- PA_2024 %>%
+#   select(ComplexID:beta) %>%
+#   pivot_wider(names_from = Visit, values_from = c(beta, alpha)) 
+
+# 09/30/2025 changinge disversity to be a site level covariate. Could change to be prev. level, but would need to siwtch to
+# dynamic multi scale mod + rmark
+
+#2022
+PA_2022 <- PA_2022 %>% group_by(ComplexID, SiteID, PondID) %>% summarize(AB = sum(AB),
+                                                                         AT = sum(AT),
+                                                                         FT = sum(FT),
+                                                                         GF = sum(GF),
+                                                                         GT = sum(GT),
+                                                                         LF = sum(LF),
+                                                                         MF = sum(MF),
+                                                                         PF = sum(PF),
+                                                                         RSN = sum(RSN),
+                                                                         SP = sum(SP),
+                                                                         WF = sum(WF))
+for(i in 4:ncol(PA_2022)){
+  PA_2022[,i] <- ifelse(PA_2022[,i] > 0, 1, 0)
+}
+PA_2022$alpha <- rowSums(PA_2022[4:ncol(PA_2022)])
+PA_2022 <- PA_2022 %>% relocate(alpha, .after = PondID)
 PA_2022$beta <- NA
 PA_2022 <-  relocate(PA_2022, beta, .after = alpha)
 for (i in 1:max(PA_2022$ComplexID)) {
-  for (j in 1:visits) {
     Complex <- as.character(i)
-    visit <- as.character(j)
-    metacomm <- PA_2022 %>% filter(ComplexID == Complex & Visit == visit)
+    metacomm <- PA_2022 %>% filter(ComplexID == Complex)
     betadiv <- mean(vegdist(metacomm[,7:ncol(metacomm)], binary =T))
     betadiv <- rep(betadiv, nrow(metacomm))
-    PA_2022[PA_2022$ComplexID == Complex & PA_2022$Visit == visit,6] <- betadiv
-  }
+    PA_2022[PA_2022$ComplexID == Complex,5] <- betadiv
 }
 
-# 2024
+#2024
+
+PA_2024 <- PA_2024 %>% group_by(ComplexID, SiteID, PondID) %>% summarize(AB = sum(AB),
+                                                                         AT = sum(AT),
+                                                                         FT = sum(FT),
+                                                                         GF = sum(GF),
+                                                                         GT = sum(GT),
+                                                                         LF = sum(LF),
+                                                                         MF = sum(MF),
+                                                                         PF = sum(PF),
+                                                                         RSN = sum(RSN),
+                                                                         SP = sum(SP),
+                                                                         WF = sum(WF))
+for(i in 4:ncol(PA_2024)){
+  PA_2024[,i] <- ifelse(PA_2024[,i] > 0, 1, 0)
+}
+PA_2024$alpha <- rowSums(PA_2024[4:ncol(PA_2024)])
+PA_2024 <- PA_2024 %>% relocate(alpha, .after = PondID)
 PA_2024$beta <- NA
 PA_2024 <-  relocate(PA_2024, beta, .after = alpha)
 for (i in 1:max(PA_2024$ComplexID)) {
-  for (j in 1:visits) {
-    Complex <- as.character(i)
-    visit <- as.character(j)
-    metacomm <- PA_2024 %>% filter(ComplexID == Complex & Visit == visit)
-    betadiv <- mean(vegdist(metacomm[,7:ncol(metacomm)], binary =T))
-    detadiv <- rep(betadiv, nrow(metacomm))
-    PA_2024[PA_2024$ComplexID == Complex & PA_2024$Visit == visit,6] <- betadiv
-  }
+  Complex <- as.character(i)
+  metacomm <- PA_2024 %>% filter(ComplexID == Complex)
+  betadiv <- mean(vegdist(metacomm[,7:ncol(metacomm)], binary =T))
+  betadiv <- rep(betadiv, nrow(metacomm))
+  PA_2024[PA_2024$ComplexID == Complex,5] <- betadiv
 }
 
-# My opinion based on the 6 DF's.  I get a lot of warnings for the VES + dipnet DF's b/c there are a lot of cases where nothing was detected
-# I think that only useful info is the overall P/A data (PA_2022 and PA_2024). So until I here otherwise I'm only moving forward with that
-PA_2022[is.nan(PA_2022$beta),6] <- 0
-Diversity_2022 <- PA_2022 %>% 
-  select(ComplexID:beta) %>% 
-  pivot_wider(names_from = Visit, values_from = c(beta, alpha)) 
+# # I think that only useful info is the overall P/A data (PA_2022 and PA_2024). So until I here otherwise I'm only moving forward with that
+PA_2022[is.nan(PA_2022$beta),5] <- 0
+PA_2024[is.nan(PA_2024$beta),5] <- 0
 
-PA_2024[is.nan(PA_2024$beta),6] <- 0
-Diversity_2024 <- PA_2024 %>%
-  select(ComplexID:beta) %>%
-  pivot_wider(names_from = Visit, values_from = c(beta, alpha)) 
+Diversity_2022 <- PA_2022 %>% select(ComplexID:beta)
+Diversity_2024 <- PA_2024 %>% select(ComplexID:beta)
 
 setwd(data)
 save(Diversity_2022,

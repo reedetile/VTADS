@@ -24,12 +24,66 @@ load("TempDataOccMod.RData")
 
 # Program Body------------------------------------------
 
-#first need to combine covariate data
+# First lets finish cleaning up data. Need to change NaN to NA, and make sure columns are organized
 
-cov_data2022 <- list(DivData = Diversity_2022, TempData = TemData2022_OccMod)
-cov_data2024 <- list(DivData = Diversity_2024, TempData = TemData2024_OccMod)
-cov_data2022 <- lapply(cov_data2022, as.data.frame)
-cov_data2024 <- lapply(cov_data2024, as.data.frame)
+TempData2022 <- TemData2022_OccMod 
+TempData2022$mean_temp <- ifelse(is.nan(TempData2022$mean_temp), NA, TempData2022$mean_temp)
+TempData2022$scaled_temp <- scale(TempData2022$mean_temp)
+TempData2022 <- TempData2022 %>% arrange(SiteID)
+TempData2022 <- TempData2022 %>% select(!mean_temp)
+
+TempData2024 <- TemData2024_OccMod 
+TempData2024$mean_temp <- ifelse(is.nan(TempData2024$mean_temp), NA, TempData2024$mean_temp)
+TempData2024$scaled_temp <- scale(TempData2024$mean_temp)
+TempData2024 <- TempData2024 %>% arrange(SiteID)
+TempData2024 <- TempData2024 %>% select(!mean_temp)
+
+
+#Now lets make the lists for site level covs
+
+SiteCovs_2022 <- list(alphaData = Diversity_2022$alpha, betaData = Diversity_2022$beta, TempData = TempData2022$scaled_temp)
+SiteCovs_2024 <- list(alphaData = Diversity_2024$alpha, betaData = Diversity_2024$beta, TempData = TempData2024$scaled_temp)
+SiteCovs_2022 <- lapply(SiteCovs_2022, as.data.frame)
+SiteCovs_2024 <- lapply(SiteCovs_2024, as.data.frame)
+
+#Want to make a phi (aka theta) list as well
+numFrogs <- 12*3
+Sites <- 24
+phi_list_2022 <- list(alphaData = NA, betaData = NA, TempData = NA)
+
+for(i in 1:length(phi_list_2022)){
+  data <- rep(unlist(SiteCovs_2022[[i]][[1]]), times = numFrogs)
+  data <- data.frame(matrix(data = data, nrow = Sites, ncol = numFrogs))
+  phi_list_2022[[i]] <- data
+}
+
+phi_list_2024 <- list(alphaData = NA, betaData = NA, TempData = NA)
+
+for(i in 1:length(phi_list_2024)){
+  data <- rep(unlist(SiteCovs_2024[[i]][[1]]), times = numFrogs)
+  data <- data.frame(matrix(data = data, nrow = Sites, ncol = numFrogs))
+  phi_list_2024[[i]] <- data
+}
+
+# Lastly need to make obsCovs list
+
+dets <- numFrogs * 2
+
+obsCovsList_2022 <- list(alphaData = NA, betaData = NA, TempData = NA)
+
+for(i in 1:length(obsCovsList_2022)){
+  data <- rep(unlist(SiteCovs_2022[[i]][[1]]), times = dets)
+  data <- data.frame(matrix(data = data,nrow = Sites, ncol = dets))
+  obsCovsList_2022[[i]] <- data
+}
+
+obsCovsList_2024 <- list(alphaData = NA, betaData = NA, TempData = NA)
+
+for(i in 1:length(obsCovsList_2024)){
+  data <- rep(unlist(SiteCovs_2024[[i]][[1]]), times = dets)
+  data <- data.frame(matrix(data = data,nrow = Sites, ncol = dets))
+  obsCovsList_2024[[i]] <- data
+}
 
 # Note on naming models = There are 3 parameters, psi, theta, and p
 # Each parameter could be either constant, affected by alpha diversity, or effected by beta diversity
@@ -39,11 +93,22 @@ cov_data2024 <- lapply(cov_data2024, as.data.frame)
 # NullNullAlpha because it includes an effect of alpha on detection/intensity. And so on.
 
 #creating UMFs
-numFrogs <- 12*3
-umf_2022 <- unmarkedMultFrame(y = BD_2022, obsCovs = cov_data2022, yearlySiteCovs = ???, numPrimary = numFrogs) 
-# need to adjust visit covs so they can be applied to yearly site covs 
-umf_2024 <- unmarkedMultFrame(y = BD_2024, obsCovs = cov_data2024, yearlySiteCovs = ???, numPrimary = numFrogs)
-# need to adjust visit covs so they can be applied to yearly site covs
+
+SiteCovs_2022_df <- do.call(cbind, SiteCovs_2022)
+colnames(SiteCovs_2022_df) <- c("alpha", "beta","Temp")
+umf_2022 <- unmarkedMultFrame(y = BD_2022, 
+                              siteCovs = SiteCovs_2022_df, 
+                              obsCovs = obsCovsList_2022, 
+                              yearlySiteCovs = phi_list_2022, 
+                              numPrimary = numFrogs) 
+
+SiteCovs_2024_df <- do.call(cbind, SiteCovs_2024)
+colnames(SiteCovs_2024_df) <- c("alpha", "beta","Temp")
+umf_2024 <- unmarkedMultFrame(y = BD_2024, 
+                              siteCovs = SiteCovs_2024_df, 
+                              obsCovs = obsCovsList_2024, 
+                              yearlySiteCovs = phi_list_2024, 
+                              numPrimary = numFrogs)
 ##########
 ###2022###
 ##########

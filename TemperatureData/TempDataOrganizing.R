@@ -130,51 +130,85 @@ for(i in 1:length(Temperature_list)){
   Site_list <- vector("list", length = length(Year_array))
   Site_df <- Temperature_list[[i]][[1]]
   Site_df$Temp <- as.numeric(Site_df$Temp)
-  name <- SiteID[[i]]
+  Site_df$Year <- year(Site_df$Date)
+  site_name <- SiteID[[i]]
   site_ls <- vector("list", length = length(Year_array))
-  for (j in 1:length(Year_array)) {
-    surv_df <- data.frame(matrix(nrow = 3, ncol = 3))
-    colnames(surv_df) <- c("Year", "Survey", "mean_temp")
-    YearData <- SurveyDates %>% filter(SiteID == Temperature_list[[i]][[2]] & Year == Year_array[[j]])
-    for (k in 1:length(Survey)) {
-      surv_subset <- YearData %>% filter(Visit == Survey[[k]]) 
-      survey.date <- surv_subset$Date
-      TwoWeeks <- survey.date - days(14)
-      time_interval <- interval(TwoWeeks, survey.date)
-      data <- Site_df %>% filter(Date %within% time_interval)
-      Site <- name
-      surv_df$Year <- Year_array[[j]]
-      surv_df[k,2] <- Survey[[k]]
-      surv_df[k,3] <- mean(data$Temp)
+  df <- data.frame(matrix(nrow = 1, ncol = 3))
+  colnames(df) <- c("SiteID", "Year","mean_temp")
+    for (j in 1:length(Year_array)) {
+      data <- Site_df %>% filter(Year == Year_array[[j]])
+      AvgTemp <- mean(data$Temp, na.rm = T)
+      df[j,1] <- site_name
+      df[j,2] <- Year_array[[j]]
+      df[j,3] <- AvgTemp
     }
-    site_ls[[j]] <- surv_df
-  }
-  AvgTempsList[[i]] <- assign(name, site_ls)
+  AvgTempsList[[i]] <- df
 }
 
-names(AvgTempsList) <- SiteID
+AvgTemps_df <- do.call(rbind, AvgTempsList)
 
-AvgTempsList2 <- vector("list", length = length(AvgTempsList))
-names(AvgTempsList2) <- names(AvgTempsList)
-for (i in 1:length(AvgTempsList)) {
-  AvgTempsList2[[i]] <-  do.call(rbind, AvgTempsList[[i]])
-}
+Lastrows <- data.frame(SiteID = c("06-02","06-02"), Year = c("2022","2024"), mean_temp = rep(NA,2))
+
+AvgTemps_df <- rbind(AvgTemps_df,Lastrows)
+
+TemData2022_OccMod <- filter(AvgTemps_df, Year == "2022")
+TemData2024_OccMod <- filter(AvgTemps_df, Year == "2024")
 
 
-
-
-SumTempData <- bind_rows(AvgTempsList2, .id="id")
-SumTempData <- SumTempData %>% mutate_all(~ifelse(is.nan(.), NA, .))
-colnames(SumTempData)[1] <- "SiteID"
-TempData_2022 <- SumTempData %>% filter(Year == "2022")
-TemData2022_OccMod <- TempData_2022 %>% pivot_wider(names_from = Survey, values_from = mean_temp)
-LastRow <- c("06-02",rep(NA, 4)) #need to add in dumby row for 06-02
-TemData2022_OccMod <- rbind(TemData2022_OccMod, LastRow)
-
-TempData_2024 <- SumTempData %>% filter(Year == "2024")
-TemData2024_OccMod <- TempData_2024 %>% pivot_wider(names_from = Survey, values_from = mean_temp)
-LastRow <- c("06-02",rep(NA, 4)) #need to add in dumby row for 06-02
-TemData2024_OccMod <- rbind(TemData2024_OccMod, LastRow)
 
 setwd(paste(repo, "/Data", sep = ""))
-save(TemData2022_OccMod, TemData2024_OccMod, file = "TempDataOccMod.RData")
+save(TemData2022_OccMod, TemData2024_OccMod, file = "TempDataOccMod.RData")  
+
+
+
+# for(i in 1:length(Temperature_list)){
+#   Site_list <- vector("list", length = length(Year_array))
+#   Site_df <- Temperature_list[[i]][[1]]
+#   Site_df$Temp <- as.numeric(Site_df$Temp)
+#   name <- SiteID[[i]]
+#   site_ls <- vector("list", length = length(Year_array))
+#   for (j in 1:length(Year_array)) {
+#     surv_df <- data.frame(matrix(nrow = 3, ncol = 3))
+#     colnames(surv_df) <- c("Year", "Survey", "mean_temp")
+#     YearData <- SurveyDates %>% filter(SiteID == Temperature_list[[i]][[2]] & Year == Year_array[[j]])
+#     for (k in 1:length(Survey)) {
+#       surv_subset <- YearData %>% filter(Visit == Survey[[k]]) 
+#       survey.date <- surv_subset$Date
+#       TwoWeeks <- survey.date - days(14)
+#       time_interval <- interval(TwoWeeks, survey.date)
+#       data <- Site_df %>% filter(Date %within% time_interval)
+#       Site <- name
+#       surv_df$Year <- Year_array[[j]]
+#       surv_df[k,2] <- Survey[[k]]
+#       surv_df[k,3] <- mean(data$Temp)
+#     }
+#     site_ls[[j]] <- surv_df
+#   }
+#   AvgTempsList[[i]] <- assign(name, site_ls)
+# }
+# 
+# names(AvgTempsList) <- SiteID
+# 
+# AvgTempsList2 <- vector("list", length = length(AvgTempsList))
+# names(AvgTempsList2) <- names(AvgTempsList)
+# for (i in 1:length(AvgTempsList)) {
+#   AvgTempsList2[[i]] <-  do.call(rbind, AvgTempsList[[i]])
+# }
+# 
+# 
+# 
+# 
+# SumTempData <- bind_rows(AvgTempsList2, .id="id")
+# SumTempData <- SumTempData %>% mutate_all(~ifelse(is.nan(.), NA, .))
+# colnames(SumTempData)[1] <- "SiteID"
+# TempData_2022 <- SumTempData %>% filter(Year == "2022")
+# TemData2022_OccMod <- TempData_2022 %>% pivot_wider(names_from = Survey, values_from = mean_temp)
+# LastRow <- c("06-02",rep(NA, 4)) #need to add in dumby row for 06-02
+# TemData2022_OccMod <- rbind(TemData2022_OccMod, LastRow)
+# 
+# TempData_2024 <- SumTempData %>% filter(Year == "2024")
+# TemData2024_OccMod <- TempData_2024 %>% pivot_wider(names_from = Survey, values_from = mean_temp)
+# LastRow <- c("06-02",rep(NA, 4)) #need to add in dumby row for 06-02
+# TemData2024_OccMod <- rbind(TemData2024_OccMod, LastRow)
+
+
