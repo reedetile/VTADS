@@ -115,35 +115,35 @@ umf_2024 <- unmarkedMultFrame(y = BD_2024,
 
 # If temp included
 # Psi ~ Temp
-NullNullNull <- goccu(psiformula = ~Temp, phiformula = ~Temp, pformula = ~Temp,data = ) # Really a temp model
-NullNullAlpha <- goccu(psiformula = ~Temp, phiformula = ~Temp, pformula = ~alpha + Temp,data = )
-NullNullBeta <- goccu(psiformula = ~Temp, phiformula = ~Temp, pformula = ~beta+ Temp,data = )
-NullAlphaNull <- goccu(psiformula = ~Temp, phiformula = ~alpha + Temp, pformula = ~Temp,data = )
-NullAlphaAlpha <- goccu(psiformula = ~Temp, phiformula = ~alpha + Temp, pformula = ~alpha + Temp,data = )
-NullAlphaBeta <- goccu(psiformula = ~Temp, phiformula = ~alpha + Temp, pformula = ~beta+ Temp,data = )
-NullBetaNull <- goccu(psiformula = ~Temp, phiformula = ~beta+ Temp, pformula = ~Temp,data = ) 
-NullBetaAlpha <- goccu(psiformula = ~Temp, phiformula = ~beta + Temp, pformula = ~alpha + Temp,data = )
-NullBetaBeta <- goccu(psiformula = ~Temp, phiformula = ~beta + Temp, pformula = ~beta + Temp,data = )
+NullNullNull <- goccu(psiformula = ~Temp, phiformula = ~Temp, pformula = ~Temp,data = umf_2022 ) # Really a temp model
+NullNullAlpha <- goccu(psiformula = ~Temp, phiformula = ~Temp, pformula = ~alpha + Temp,data = umf_2022 )
+NullNullBeta <- goccu(psiformula = ~Temp, phiformula = ~Temp, pformula = ~beta+ Temp,data = umf_2022 )
+NullAlphaNull <- goccu(psiformula = ~Temp, phiformula = ~alpha + Temp, pformula = ~Temp,data = umf_2022 )
+NullAlphaAlpha <- goccu(psiformula = ~Temp, phiformula = ~alpha + Temp, pformula = ~alpha + Temp,data = umf_2022 )
+NullAlphaBeta <- goccu(psiformula = ~Temp, phiformula = ~alpha + Temp, pformula = ~beta+ Temp,data = umf_2022 )
+NullBetaNull <- goccu(psiformula = ~Temp, phiformula = ~beta+ Temp, pformula = ~Temp,data = umf_2022 ) 
+NullBetaAlpha <- goccu(psiformula = ~Temp, phiformula = ~beta + Temp, pformula = ~alpha + Temp,data = umf_2022 )
+NullBetaBeta <- goccu(psiformula = ~Temp, phiformula = ~beta + Temp, pformula = ~beta + Temp,data = umf_2022 )
 #Psi ~ alpha
-AlphaNullNull <- goccu(psiformula = ~alpha + Temp, phiformula = ~Temp, pformula = ~Temp,data = )
-AlphaNullAlpha <- goccu(psiformula = ~alpha + Temp, phiformula = ~Temp, pformula = ~alpha + Temp,data = )
-AlphaNullBeta <- goccu(psiformula = ~alpha + Temp, phiformula = ~Temp, pformula = ~beta + Temp,data = )
-AlphaAlphaNull <- goccu(psiformula = ~alpha + Temp, phiformula = ~alpha + Temp, pformula = ~Temp,data = )
-AlphaAlphaAlpha <- goccu(psiformula = ~alpha + Temp, phiformula = ~alpha + Temp, pformula = ~alpha + Temp,data = )
-AlphaAlphaBeta <- goccu(psiformula = ~alpha + Temp, phiformula = ~alpha + Temp, pformula = ~beta + Temp,data = )
-AlphaBetaNull <- goccu(psiformula = ~alpha + Temp, phiformula = ~beta + Temp, pformula = ~Temp,data = )
-AlphaBetaAlpha <- goccu(psiformula = ~alpha + Temp, phiformula = ~beta + Temp, pformula = ~alpha + Temp,data = )
-AlphaBetaBeta <- goccu(psiformula = ~alpha + Temp, phiformula = ~beta + Temp, pformula = ~beta + Temp,data = )
+AlphaNullNull <- goccu(psiformula = ~alpha + Temp, phiformula = ~Temp, pformula = ~Temp,data = umf_2022 )
+AlphaNullAlpha <- goccu(psiformula = ~alpha + Temp, phiformula = ~Temp, pformula = ~alpha + Temp,data = umf_2022 )
+AlphaNullBeta <- goccu(psiformula = ~alpha + Temp, phiformula = ~Temp, pformula = ~beta + Temp,data = umf_2022 )
+AlphaAlphaNull <- goccu(psiformula = ~alpha + Temp, phiformula = ~alpha + Temp, pformula = ~Temp,data = umf_2022 )
+AlphaAlphaAlpha <- goccu(psiformula = ~alpha + Temp, phiformula = ~alpha + Temp, pformula = ~alpha + Temp,data = umf_2022 )
+AlphaAlphaBeta <- goccu(psiformula = ~alpha + Temp, phiformula = ~alpha + Temp, pformula = ~beta + Temp,data = umf_2022 )
+AlphaBetaNull <- goccu(psiformula = ~alpha + Temp, phiformula = ~beta + Temp, pformula = ~Temp,data = umf_2022 )
+AlphaBetaAlpha <- goccu(psiformula = ~alpha + Temp, phiformula = ~beta + Temp, pformula = ~alpha + Temp,data = umf_2022 )
+AlphaBetaBeta <- goccu(psiformula = ~alpha + Temp, phiformula = ~beta + Temp, pformula = ~beta + Temp,data = umf_2022 )
 # Psi ~ beta
-BetaNullNull <- goccu(psiformula = ~beta + Temp, phiformula = ~Temp, pformula = ~Temp,data = )
-BetaNullAlpha <- goccu(psiformula = ~beta + Temp, phiformula = ~Temp, pformula = ~alpha + Temp,data = )
-BetaNullBeta <- goccu(psiformula = ~beta + Temp, phiformula = ~Temp, pformula = ~beta + Temp,data = )
-BetaAlphaNull <- goccu(psiformula = ~beta + Temp, phiformula = ~alpha + Temp, pformula = ~Temp,data = )
-BetaAlphaAlpha <- goccu(psiformula = ~beta + Temp, phiformula = ~alpha + Temp, pformula = ~alpha + Temp,data = )
-BetaAlphaBeta <- goccu(psiformula = ~beta + Temp, phiformula = ~alpha + Temp, pformula = ~beta + Temp,data = )
-BetaBetaNull <- goccu(psiformula = ~beta + Temp, phiformula = ~beta + Temp, pformula = ~Temp,data = )
-BetaBetaAlpha <- goccu(psiformula = ~beta + Temp, phiformula = ~beta + Temp, pformula = ~alpha + Temp,data = )
-BetaBetaBeta <- goccu(psiformula = ~beta + Temp, phiformula = ~beta + Temp, pformula = ~beta + Temp,data = )
+BetaNullNull <- goccu(psiformula = ~beta + Temp, phiformula = ~Temp, pformula = ~Temp,data = umf_2022 )
+BetaNullAlpha <- goccu(psiformula = ~beta + Temp, phiformula = ~Temp, pformula = ~alpha + Temp,data = umf_2022 )
+BetaNullBeta <- goccu(psiformula = ~beta + Temp, phiformula = ~Temp, pformula = ~beta + Temp,data = umf_2022 )
+BetaAlphaNull <- goccu(psiformula = ~beta + Temp, phiformula = ~alpha + Temp, pformula = ~Temp,data = umf_2022 )
+BetaAlphaAlpha <- goccu(psiformula = ~beta + Temp, phiformula = ~alpha + Temp, pformula = ~alpha + Temp,data = umf_2022 )
+BetaAlphaBeta <- goccu(psiformula = ~beta + Temp, phiformula = ~alpha + Temp, pformula = ~beta + Temp,data = umf_2022 )
+BetaBetaNull <- goccu(psiformula = ~beta + Temp, phiformula = ~beta + Temp, pformula = ~Temp,data = umf_2022 )
+BetaBetaAlpha <- goccu(psiformula = ~beta + Temp, phiformula = ~beta + Temp, pformula = ~alpha + Temp,data = umf_2022 )
+BetaBetaBeta <- goccu(psiformula = ~beta + Temp, phiformula = ~beta + Temp, pformula = ~beta + Temp,data = umf_2022 )
 
 # Do model selection
 fitlist.psi <- fitList(NullNullNull,
@@ -183,38 +183,38 @@ modSel(fitlist.psi)
 
 # If temp included
 # Psi ~ Temp
-NullNullNull <- goccu(psiformula = ~Temp, phiformula = ~Temp, pformula = ~Temp,data = ) # Really a temp model
-NullNullAlpha <- goccu(psiformula = ~Temp, phiformula = ~Temp, pformula = ~alpha + Temp,data = )
-NullNullBeta <- goccu(psiformula = ~Temp, phiformula = ~Temp, pformula = ~beta+ Temp,data = )
-NullAlphaNull <- goccu(psiformula = ~Temp, phiformula = ~alpha + Temp, pformula = ~Temp,data = )
-NullAlphaAlpha <- goccu(psiformula = ~Temp, phiformula = ~alpha + Temp, pformula = ~alpha + Temp,data = )
-NullAlphaBeta <- goccu(psiformula = ~Temp, phiformula = ~alpha + Temp, pformula = ~beta+ Temp,data = )
-NullBetaNull <- goccu(psiformula = ~Temp, phiformula = ~beta+ Temp, pformula = ~Temp,data = ) 
-NullBetaAlpha <- goccu(psiformula = ~Temp, phiformula = ~beta + Temp, pformula = ~alpha + Temp,data = )
-NullBetaBeta <- goccu(psiformula = ~Temp, phiformula = ~beta + Temp, pformula = ~beta + Temp,data = )
+NullNullNull <- goccu(psiformula = ~Temp, phiformula = ~Temp, pformula = ~Temp,data = umf_2024 ) # Really a temp model
+NullNullAlpha <- goccu(psiformula = ~Temp, phiformula = ~Temp, pformula = ~alpha + Temp,data = umf_2024 )
+NullNullBeta <- goccu(psiformula = ~Temp, phiformula = ~Temp, pformula = ~beta+ Temp,data = umf_2024 )
+NullAlphaNull <- goccu(psiformula = ~Temp, phiformula = ~alpha + Temp, pformula = ~Temp,data = umf_2024 )
+NullAlphaAlpha <- goccu(psiformula = ~Temp, phiformula = ~alpha + Temp, pformula = ~alpha + Temp,data = umf_2024 )
+NullAlphaBeta <- goccu(psiformula = ~Temp, phiformula = ~alpha + Temp, pformula = ~beta+ Temp,data = umf_2024 )
+NullBetaNull <- goccu(psiformula = ~Temp, phiformula = ~beta+ Temp, pformula = ~Temp,data = umf_2024 ) 
+NullBetaAlpha <- goccu(psiformula = ~Temp, phiformula = ~beta + Temp, pformula = ~alpha + Temp,data = umf_2024 )
+NullBetaBeta <- goccu(psiformula = ~Temp, phiformula = ~beta + Temp, pformula = ~beta + Temp,data = umf_2024 )
 #Psi ~ alpha
-AlphaNullNull <- goccu(psiformula = ~alpha + Temp, phiformula = ~Temp, pformula = ~Temp,data = )
-AlphaNullAlpha <- goccu(psiformula = ~alpha + Temp, phiformula = ~Temp, pformula = ~alpha + Temp,data = )
-AlphaNullBeta <- goccu(psiformula = ~alpha + Temp, phiformula = ~Temp, pformula = ~beta + Temp,data = )
-AlphaAlphaNull <- goccu(psiformula = ~alpha + Temp, phiformula = ~alpha + Temp, pformula = ~Temp,data = )
-AlphaAlphaAlpha <- goccu(psiformula = ~alpha + Temp, phiformula = ~alpha + Temp, pformula = ~alpha + Temp,data = )
-AlphaAlphaBeta <- goccu(psiformula = ~alpha + Temp, phiformula = ~alpha + Temp, pformula = ~beta + Temp,data = )
-AlphaBetaNull <- goccu(psiformula = ~alpha + Temp, phiformula = ~beta + Temp, pformula = ~Temp,data = )
-AlphaBetaAlpha <- goccu(psiformula = ~alpha + Temp, phiformula = ~beta + Temp, pformula = ~alpha + Temp,data = )
-AlphaBetaBeta <- goccu(psiformula = ~alpha + Temp, phiformula = ~beta + Temp, pformula = ~beta + Temp,data = )
+AlphaNullNull <- goccu(psiformula = ~alpha + Temp, phiformula = ~Temp, pformula = ~Temp,data = umf_2024 )
+AlphaNullAlpha <- goccu(psiformula = ~alpha + Temp, phiformula = ~Temp, pformula = ~alpha + Temp,data = umf_2024 )
+AlphaNullBeta <- goccu(psiformula = ~alpha + Temp, phiformula = ~Temp, pformula = ~beta + Temp,data = umf_2024 )
+AlphaAlphaNull <- goccu(psiformula = ~alpha + Temp, phiformula = ~alpha + Temp, pformula = ~Temp,data = umf_2024 )
+AlphaAlphaAlpha <- goccu(psiformula = ~alpha + Temp, phiformula = ~alpha + Temp, pformula = ~alpha + Temp,data = umf_2024 )
+AlphaAlphaBeta <- goccu(psiformula = ~alpha + Temp, phiformula = ~alpha + Temp, pformula = ~beta + Temp,data = umf_2024 )
+AlphaBetaNull <- goccu(psiformula = ~alpha + Temp, phiformula = ~beta + Temp, pformula = ~Temp,data = umf_2024 )
+AlphaBetaAlpha <- goccu(psiformula = ~alpha + Temp, phiformula = ~beta + Temp, pformula = ~alpha + Temp,data = umf_2024 )
+AlphaBetaBeta <- goccu(psiformula = ~alpha + Temp, phiformula = ~beta + Temp, pformula = ~beta + Temp,data = umf_2024 )
 # Psi ~ beta
-BetaNullNull <- goccu(psiformula = ~beta + Temp, phiformula = ~Temp, pformula = ~Temp,data = )
-BetaNullAlpha <- goccu(psiformula = ~beta + Temp, phiformula = ~Temp, pformula = ~alpha + Temp,data = )
-BetaNullBeta <- goccu(psiformula = ~beta + Temp, phiformula = ~Temp, pformula = ~beta + Temp,data = )
-BetaAlphaNull <- goccu(psiformula = ~beta + Temp, phiformula = ~alpha + Temp, pformula = ~Temp,data = )
-BetaAlphaAlpha <- goccu(psiformula = ~beta + Temp, phiformula = ~alpha + Temp, pformula = ~alpha + Temp,data = )
-BetaAlphaBeta <- goccu(psiformula = ~beta + Temp, phiformula = ~alpha + Temp, pformula = ~beta + Temp,data = )
-BetaBetaNull <- goccu(psiformula = ~beta + Temp, phiformula = ~beta + Temp, pformula = ~Temp,data = )
-BetaBetaAlpha <- goccu(psiformula = ~beta + Temp, phiformula = ~beta + Temp, pformula = ~alpha + Temp,data = )
-BetaBetaBeta <- goccu(psiformula = ~beta + Temp, phiformula = ~beta + Temp, pformula = ~beta + Temp,data = )
+BetaNullNull <- goccu(psiformula = ~beta + Temp, phiformula = ~Temp, pformula = ~Temp,data = umf_2024 )
+BetaNullAlpha <- goccu(psiformula = ~beta + Temp, phiformula = ~Temp, pformula = ~alpha + Temp,data = umf_2024 )
+BetaNullBeta <- goccu(psiformula = ~beta + Temp, phiformula = ~Temp, pformula = ~beta + Temp,data = umf_2024 )
+BetaAlphaNull <- goccu(psiformula = ~beta + Temp, phiformula = ~alpha + Temp, pformula = ~Temp,data = umf_2024 )
+BetaAlphaAlpha <- goccu(psiformula = ~beta + Temp, phiformula = ~alpha + Temp, pformula = ~alpha + Temp,data = umf_2024 )
+BetaAlphaBeta <- goccu(psiformula = ~beta + Temp, phiformula = ~alpha + Temp, pformula = ~beta + Temp,data = umf_2024 )
+BetaBetaNull <- goccu(psiformula = ~beta + Temp, phiformula = ~beta + Temp, pformula = ~Temp,data = umf_2024 )
+BetaBetaAlpha <- goccu(psiformula = ~beta + Temp, phiformula = ~beta + Temp, pformula = ~alpha + Temp,data = umf_2024 )
+BetaBetaBeta <- goccu(psiformula = ~beta + Temp, phiformula = ~beta + Temp, pformula = ~beta + Temp,data = umf_2024 )
 
 # Do model selection
-fitlist.psi <- fitList(NullNullNull,
+fitlist.BD <- fitList(NullNullNull,
                        NullNullAlpha,
                        NullNullBeta,
                        NullAlphaNull,
@@ -242,9 +242,10 @@ fitlist.psi <- fitList(NullNullNull,
                        BetaBetaAlpha,
                        BetaBetaBeta)
 
-modSel(fitlist.psi)
+modSel(fitlist.BD)
 
-
+setwd(data)
+saveRDS(fitList.BD, file = "BD_mods")
 
 # # If only want to explore Alpha*NumPonds, with temperature
 # NullNullNull <- goccu(psiformula = ~Temp, phiformula = ~Temp, pformula = ~Temp,data = ) # Really a temp model
