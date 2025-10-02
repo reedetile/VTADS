@@ -4,7 +4,7 @@
 # 10/01/2025
 
 # Load libraries
-library(dplyr)
+library(tidyr)
 library(stringr)
 
 # set working directories
@@ -66,11 +66,39 @@ DiseaseData2 %>% filter(ComplexID == as.character(1) &
 DiseaseData2$LabNumber[DiseaseData2$ComplexID == as.character(1) &
                          DiseaseData2$PondID == as.character(2) &
                          DiseaseData2$Survey.Number == as.character(1)]
+max(DiseaseData2$LabNumber)
+DiseaseData2 <- filter(DiseaseData2, LabNumber != "13") #Just gonna remove the 2 cases where we caught a 13th gf
 
 #Now I need to pivot it in a way that it can be read by an occ mod in unmarked
-BD <- DiseaseData2 %>% select(!c(LabID,RV_Rep1:RV_Rep2,SiteID,WaterTemp.Nearest))
+#BD
+BD <- DiseaseData2 %>% select(!c(LabID,RV_Rep1:RV_Rep2,SiteID,WaterTemp.Nearest, CatchOfDay))
+BD_longer <- BD %>% pivot_longer(cols = BD_Rep1:BD_Rep2,names_to = "Rep", values_to = "PA")
+BD_longer$Rep <- str_remove(BD_longer$Rep, "BD_")
+BD_wide <- BD_longer %>% 
+  select(!SampleID) %>%
+  pivot_wider(names_from = c(Survey.Number, LabNumber, Rep),
+              values_from = PA,
+              names_sort = T)
 
 
-BD_wider <- 
+DummyData_0801 <- c("8","1",rep(NA, times = ncol(BD_wide)-2))
+BD_wide <- rbind(BD_wide, DummyData_0801)
+BD_wide <- arrange(BD_wide,as.numeric(ComplexID),as.numeric(PondID))
+#RV
+RV <- DiseaseData2 %>% select(!c(LabID,BD_Rep1:BD_Rep2,SiteID,WaterTemp.Nearest, CatchOfDay))
+RV_longer <- RV %>% pivot_longer(cols = RV_Rep1:RV_Rep2,names_to = "Rep", values_to = "PA")
+RV_longer$Rep <- str_remove(RV_longer$Rep, "RV_")
+RV_wide <- RV_longer %>% 
+  select(!SampleID) %>%
+  pivot_wider(names_from = c(Survey.Number, LabNumber, Rep),
+              values_from = PA,
+              names_sort = T)
 
 
+DummyData_0801 <- c("8","1",rep(NA, times = ncol(RV_wide)-2))
+RV_wide <- rbind(RV_wide, DummyData_0801)
+RV_wide <- arrange(RV_wide,as.numeric(ComplexID),as.numeric(PondID))
+
+setwd(data)
+saveRDS(BD_wide,file = "BD2024_occMod.RDS")
+saveRDS(RV_wide, file = "RV2024_occMod.RDS")

@@ -18,7 +18,7 @@ repo <- 'C:/Users/rcscott/VTADS'
 data <- paste(repo,"/Data", sep = "")
 
 setwd(data)
-BD <- # read in disease data
+BD_2024 <- readRDS("BD2024_occMod.RDS")# read in disease data
 load("biodiversityData.RData") # read in biodiversity data
 load("TempDataOccMod.RData") 
 
@@ -104,7 +104,7 @@ umf_2022 <- unmarkedMultFrame(y = BD_2022,
 
 SiteCovs_2024_df <- do.call(cbind, SiteCovs_2024)
 colnames(SiteCovs_2024_df) <- c("alpha", "beta","Temp")
-umf_2024 <- unmarkedMultFrame(y = BD_2024, 
+umf_2024 <- unmarkedMultFrame(y = BD_2024[,3:ncol(BD_2024)], 
                               siteCovs = SiteCovs_2024_df, 
                               obsCovs = obsCovsList_2024, 
                               yearlySiteCovs = phi_list_2024, 
