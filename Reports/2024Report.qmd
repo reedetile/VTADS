@@ -1,0 +1,69 @@
+---
+title: "VTADS Report 2024"
+author: "Reed Scott"
+format: docx
+editor: visual
+---
+
+In 2024 we collected biodiversity and disease data from 24 ponds at 12 sites. Surveying began May 21st and was concluded on August 15th. Each pond was surveyed three times over the course of the season. Over the course of this survey we detected 8 different species .
+
+We collected 781 swabs from 7 species: American bullfrogs, American toads, Green frogs, Grey treefrogs, Pickerel Frogs, Eastern red spotted newts, spring peepers. The table below shows the aggregate number of species detected and swabs collected over the course of the summer.
+
+```{r echo=FALSE,message=FALSE}
+repo <-  "C:/Users/rcscott/VTADS"
+data.wd <- paste(repo,"/Data", sep = "")
+setwd(data.wd)
+library(dplyr)
+load("biodiversityData.RData")
+load("PresenceAbsenceData.RData")
+
+# sum(colSums(PA_2024[,5:15]) > 0)
+# 
+# min(VES_2024_PA$Date)
+# max(VES_2024_PA$Date)
+
+SwabData <- read.csv("SwabDataMaster.csv")
+SwabData_2024 <- SwabData %>% filter(Year == "2024")
+# unique(SwabData_2024$Species)
+
+Spp_Site <- PA_2024 %>% group_by(SiteID) %>% 
+  dplyr::summarise(AB = sum(AB),
+                   AT = sum(AT),
+                   GF = sum(GF),
+                   GT = sum(GT),
+                   PF = sum(PF),
+                   RSN = sum(RSN),
+                   SP = sum(SP),
+                   WF = sum(WF))
+Spp_Site$Richness <- rowSums(Spp_Site[,2:9] > 0)
+Spp_Site$Site <- c("Birds of VT",
+                   "Audobon Center",
+                   "Gillet Pond",
+                   "Indian Brook Reservoir (East)",
+                   rep("St. Albans Reservoir",2),
+                   rep("Milton Town Forest",2),
+                   rep("Pine Hill Park",2),
+                   rep("Harm Way",2),
+                   rep("Gilbrook Forest",3),
+                   rep("Camp Johnson",3),
+                   rep("St. Michaels",3),
+                   rep("Indian Brook Reservoir (North)",3))
+colnames(Spp_Site)[1] <- "PondID"
+
+Spp_Site <- Spp_Site %>% relocate(Site, .before = PondID) %>% select(c(Site,
+                                                                       PondID, 
+                                                                       Richness))
+
+PondID <- as.character(Spp_Site$PondID)
+nswabs <- c()
+library(stringr)
+SwabData_2024$SiteID <- str_remove(SwabData_2024$SiteID, "'")
+for(i in 1:length(PondID)){
+  nswabs[[i]] <- sum(str_count(SwabData_2024$SiteID, as.character(PondID[[i]])))
+  
+}
+Spp_Site$Swabs <- nswabs
+
+library(gt)
+gt(Spp_Site)
+```

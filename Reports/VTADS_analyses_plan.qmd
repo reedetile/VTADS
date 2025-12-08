@@ -1,0 +1,69 @@
+---
+title: "VTADS Analysis Plan"
+author: "Reed Scott"
+format: docx
+editor: visual
+---
+
+Hi Gwen and Brittany!
+
+I have prepared a brief document to outline the planned analysis for VTADS. At this point, we are actually finished with the 2024 samples! So that's very exciting. I want to briefly remind you of the structure of the survey, what I've done with the data so far, and then discuss what could be done for analysis.
+
+## Field design
+
+In 2022 and 2024 we collected data from 24 ponds in 12 different sites in Vermont. Ponds were either isolated, in pairs, or in sets of 3 (see figure below). At each pond we surveyed biodiversity using both dipnet and visual encounter surveys, and swabbed for both pathogens in green frogs.
+
+```{r image, echo=FALSE, message=FALSE}
+knitr::include_graphics("C:/Users/rcscott/VTADS/PondDesign.png")
+```
+
+## Data manipulation + wrangling
+
+I have begun manipulating the 2024 data since that's almost done. The data is relatively clean so far with only minor hiccups. I plan to format the the data so that there will be one row for each site, and so that we will have a single column for every detection. For reference, since we're looking at 3 visits per pond, 12 frogs per visit max, and testing in duplicate, that 3\*12\*2 = 72 rows.
+
+## Model development + hypotheses
+
+The bulk of the conversation I'd like to have on the 17th is about hypopotheses and model development. The hypotheses for this survey is that disease state variables (occupancy, prevalence, and detection) should decrease with diversity. When defining this project I was most interested in $\beta$ diversity, but have also included $\alpha$ diversity. In an earlier meeting Brittany also mentioned how important temperature can be in Bd and FV3 dynamics. This project doesn't really focus on temperature, so I've decided to include temperature in all models.
+
+One thing I have not included yet but think could be important is a site/"complex" variable. Since some sites were closer to one another, we may expect them to be more similar to one another. I think a good way to address this and any noise from other unmeasured variables would be to a "site" covariate. My hypotheses are outlined in the table below. Including every combination of occupancy ($\psi$), prevalence ($\theta$) and detectio (p), results in 27 possible models. If you're interested, I've included a snippet of what the code for those models will look like.
+
+| Parameter | Hypothesis: $\beta$ | Hypothesis: $\alpha$ | Null Hypothesis |
+|------------------|------------------|------------------|------------------|
+| $\psi$ | Negative: Within a metacommunity, if communities are more dissimilar than interpatch disease spread will be lower. | Negative: Higher biodiversity should lower community competence [@johnson2013]. | Neutral: Biodiversity will have no effect on occupancy. |
+| $\theta$ | Negative: With lower interpatch patch transmission there will be fewer sources of disease and thus prevalence will be lower. | Negative: If biodiversity negatively regulates host interactions then with fewer interactions prevalence should be lower. | Neutral: Biodiversity will have no effect on prevalence. |
+| $p$ | Negative: If interpatch transmission is lower, then the probability of repeated infection will be lower, and thus pathogen load should be lower. | Negative: if biodiversity negatively regulates host interactions then with fewer interactions there should be lower probability of repeated infection and pathogen load should be lower. | Neutral: Biodiversity will have no effect on pathogen load. |
+
+```{r, eval=FALSE}
+# If temp included
+# Psi ~ Temp
+NullNullNull <- goccu(psiformula = ~SiteTemp, phiformula = ~IndTemp, pformula = ~RepTemp,data = umf_2022 ) # Really a temp model
+NullNullAlpha <- goccu(psiformula = ~SiteTemp, phiformula = ~IndTemp, pformula = ~alpha + RepTemp,data = umf_2022 )
+NullNullBeta <- goccu(psiformula = ~SiteTemp, phiformula = ~IndTemp, pformula = ~beta + RepTemp,data = umf_2022 )
+NullAlphaNull <- goccu(psiformula = ~SiteTemp, phiformula = ~alpha +Ind Temp, pformula = ~RepTemp,data = umf_2022 )
+NullAlphaAlpha <- goccu(psiformula = ~SiteTemp, phiformula = ~alpha +Ind Temp, pformula = ~alpha + RepTemp,data = umf_2022 )
+NullAlphaBeta <- goccu(psiformula = ~SiteTemp, phiformula = ~alpha +Ind Temp, pformula = ~beta + RepTemp,data = umf_2022 )
+NullBetaNull <- goccu(psiformula = ~SiteTemp, phiformula = ~beta+Ind Temp, pformula = ~RepTemp,data = umf_2022 ) 
+NullBetaAlpha <- goccu(psiformula = ~SiteTemp, phiformula = ~beta + IndTemp, pformula = ~alpha + RepTemp,data = umf_2022 )
+NullBetaBeta <- goccu(psiformula = ~SiteTemp, phiformula = ~beta + IndTemp, pformula = ~beta + RepTemp,data = umf_2022 )
+#Psi ~ alpha
+AlphaNullNull <- goccu(psiformula = ~alpha + SiteTemp, phiformula = ~IndTemp, pformula = ~RepTemp,data = umf_2022 )
+AlphaNullAlpha <- goccu(psiformula = ~alpha + SiteTemp, phiformula = ~IndTemp, pformula = ~alpha + RepTemp,data = umf_2022 )
+AlphaNullBeta <- goccu(psiformula = ~alpha + SiteTemp, phiformula = ~IndTemp, pformula = ~beta + RepTemp,data = umf_2022 )
+AlphaAlphaNull <- goccu(psiformula = ~alpha + SiteTemp, phiformula = ~alpha +Ind Temp, pformula = ~RepTemp,data = umf_2022 )
+AlphaAlphaAlpha <- goccu(psiformula = ~alpha + SiteTemp, phiformula = ~alpha +Ind Temp, pformula = ~alpha + RepTemp,data = umf_2022 )
+AlphaAlphaBeta <- goccu(psiformula = ~alpha + SiteTemp, phiformula = ~alpha +Ind Temp, pformula = ~beta + RepTemp,data = umf_2022 )
+AlphaBetaNull <- goccu(psiformula = ~alpha + SiteTemp, phiformula = ~beta + IndTemp, pformula = ~RepTemp,data = umf_2022 )
+AlphaBetaAlpha <- goccu(psiformula = ~alpha + SiteTemp, phiformula = ~beta + IndTemp, pformula = ~alpha + RepTemp,data = umf_2022 )
+AlphaBetaBeta <- goccu(psiformula = ~alpha + SiteTemp, phiformula = ~beta + IndTemp, pformula = ~beta + RepTemp,data = umf_2022 )
+# Psi ~ beta
+BetaNullNull <- goccu(psiformula = ~beta + SiteTemp, phiformula = ~IndTemp, pformula = ~RepTemp,data = umf_2022 )
+BetaNullAlpha <- goccu(psiformula = ~beta + SiteTemp, phiformula = ~IndTemp, pformula = ~alpha + RepTemp,data = umf_2022 )
+BetaNullBeta <- goccu(psiformula = ~beta + SiteTemp, phiformula = ~IndTemp, pformula = ~beta + RepTemp,data = umf_2022 )
+BetaAlphaNull <- goccu(psiformula = ~beta + SiteTemp, phiformula = ~alpha +Ind Temp, pformula = ~RepTemp,data = umf_2022 )
+BetaAlphaAlpha <- goccu(psiformula = ~beta + SiteTemp, phiformula = ~alpha +Ind Temp, pformula = ~alpha + RepTemp,data = umf_2022 )
+BetaAlphaBeta <- goccu(psiformula = ~beta + SiteTemp, phiformula = ~alpha +Ind Temp, pformula = ~beta + RepTemp,data = umf_2022 )
+BetaBetaNull <- goccu(psiformula = ~beta + SiteTemp, phiformula = ~beta + IndTemp, pformula = ~RepTemp,data = umf_2022 )
+BetaBetaAlpha <- goccu(psiformula = ~beta + SiteTemp, phiformula = ~beta + IndTemp, pformula = ~alpha + RepTemp,data = umf_2022 )
+BetaBetaBeta <- goccu(psiformula = ~beta + SiteTemp, phiformula = ~beta + IndTemp, pformula = ~beta + RepTemp,data = umf_2022 )
+
+```

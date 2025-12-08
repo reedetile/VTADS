@@ -11,8 +11,9 @@ library(stringr)
 library(unmarked)
 
 # Global Variables-------------------------------------
-VTADS <- getwd()
-
+repo <- 'C:/Users/rcscott/VTADS'
+data <- paste(repo,"/Data", sep = "")
+setwd(data)
 Disease_Data <- read.csv('SummaryData1.csv')
 Disease_Data <- Disease_Data[,1:3] #read in results from BD + RV qPCR
 
@@ -65,6 +66,8 @@ Disease_Data$RV.Status[Disease_Data$RV.Status == 'Negative'] <- '0'
 Disease_Data$BD.Status <- as.numeric(Disease_Data$BD.Status)
 Disease_Data$RV.Status <- as.numeric(Disease_Data$RV.Status)
 
+colnames(Disease_Data)[1] <- 'SampleID'
+field_data$SampleID <- str_remove_all(field_data$SampleID,"-")
 prelim_data <- Disease_Data %>% 
   left_join(field_data, by = "SampleID")
 

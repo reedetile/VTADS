@@ -17,7 +17,8 @@ setwd(data)
 DiseaseData_2022 <- read.csv("qPCRresults_2022.csv")
 DiseaseData_2024 <- read.csv("qPCRresults_2024.csv")
 FieldData <- read.csv("SwabDataMaster.csv")
-DiseaseData_2024$LabID <- str_remove(DiseaseData_2024$LabID, "'")
+colnames(DiseaseData_2024)[[4]] <- "LabID"
+DiseaseData_2024$LabID <- str_remove_all(DiseaseData_2024$LabID, "'")
 # DiseaseData$SampleID <- str_remove_all(DiseaseData$SampleID, "-")
 # DiseaseData$SampleID <- trimws(DiseaseData$SampleID)
 # FieldData$SampleID <- str_remove_all(FieldData$SampleID, "-")
@@ -95,9 +96,24 @@ RV_2022_wide <- RV_2022_longer %>%
 ##########
 ###2024###
 ##########
-
+LabIDKey <- read.csv("LabIDKey.csv")
+LabIDKey$LabID <- str_remove(LabIDKey$LabID,"'")
+anti_join(LabIDKey, DiseaseData_2024, by = "LabID")
 FieldData2 <- FieldData2 %>% select(!Species)
 
+DiseaseData_2024$Target <- ifelse(DiseaseData_2024$Fluor == "FAM", "Bd","FV3")
+DiseaseData_2024$Rep <- droplevels(as.factor(DiseaseData_2024$Rep))
+levels(DiseaseData_2024$Rep)
+
+
+
+Controls <- "Bd\\+FV3|NTC|Blank"
+
+DiseaseData_2024_wide <- DiseaseData_2024 %>% select(!c(Fluor,Content)) %>%
+  filter(!str_detect(LabID,Controls))%>%
+  pivot_wider(names_from = c(Target,Rep), values_from = Cq)
+
+for()
 
 DiseaseData2_2024 <- left_join(DiseaseData_2024, FieldData2, by = "SampleID")
 # Cool! I have all the data together.
