@@ -351,7 +351,22 @@ ggplot(RVPrev, aes(x = Survey.Number, y = FV3_prev, colour = SiteID))+
   theme_classic()
 
 
+#Now I need to pivot it in a way that it can be read by an occ mod in unmarked
+#BD
+RV_2024 <- DiseaseData2_2024 %>% select(!c(LabID:SampleID,WaterTemp.Nearest, CatchOfDay, BD_PA1:BD_PA2))
+RV_2024_longer <- RV_2024 %>% pivot_longer(cols = FV3_PA1:FV3_PA2,names_to = "Rep", values_to = "PA")
+RV_2024_longer$Rep <- str_remove(RV_2024_longer$Rep, "BD_PA")
+RV_2024_wide <- RV_2024_longer %>% 
+  pivot_wider(names_from = c(Survey.Number, LabNumber, Rep),
+              values_from = PA,
+              names_sort = T)
 
+
+RV_2024_wide <- arrange(RV_2024_wide,as.numeric(ComplexID),as.numeric(PondID))
+
+setwd(data)
+save(BD_2022_wide,RV_2022_wide, file = "occModdata_2022.RData")
+save(BD_2024_wide,RV_2024_wide, file = "occModdata_2024.RData")
 ### Okay last thing, need to setup water temp data to be read into occmods ###
 # 2022
 WaterTemp_2022 <- DiseaseData2_2022 %>% select(!c(SampleID,BD_Rep1:RV_Rep2,SiteID,CatchOfDay,Species))
@@ -392,10 +407,5 @@ WaterTemp_2024_duplicate <- WaterTemp_2024_duplicate[,order(names(WaterTemp_2024
 
 
 
-setwd(data)
-saveRDS(BD_2022_wide,file = "BD2022_occMod.RDS")
-saveRDS(RV_2022_wide, file = "RV2022_occMod.RDS")
-saveRDS(BD_2024_wide,file = "BD2024_occMod.RDS")
-saveRDS(RV_2022_wide, file = "RV2024_occMod.RDS")
 save(WaterTemp_2022_wider, WaterTemp_2022_duplicate, file = "WaterData2022.RData")
 save(WaterTemp_2024_wider, WaterTemp_2024_duplicate, file = "WaterData2024.RData")
