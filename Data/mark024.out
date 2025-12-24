@@ -1,0 +1,216 @@
+
+ Program  MARK  - Survival Rate Estimation with Capture-Recapture Data
+ gfortran(dble/PIM2) Vers. 11.2 Nov 2025  23-Dec-2025 20:34:22    Page  001
+  
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ 
+ Welcome to MARK rcscott on machine LT-501Y0Z2 in subdirectory
+   "C:\Users\rcscott\VTADS\Data" running file "mark024.inp".
+ This version was compiled by GCC version 15.2.0 using the options: 
+  -cpp -iprefix C:/tdm-gcc-64/mingw64-15-2/bin/../lib/gcc/
+  x86_64-w64-mingw32/15.2.0/ -D_MT -D_REENTRANT -U_REENTRANT -D
+  dbleprecision -m64 -march=x86-64-v3 -mtune=generic -mthreads -O3
+  -std=f2023 -fimplicit-none -ffpe-summary=invalid,zero,overflow,underflow
+  -fno-unsafe-math-optimizations -fopenmp-simd -fstack-arrays -flto=auto
+  -fall-intrinsics -fopenmp
+
+ This problem will use 7 of 8 possible threads.
+ Static thread allocation is used.
+ INPUT --- proc title ;
+
+ For procedure title CPU Time was 0.001 secs and System Time was 0.001 secs.
+ INPUT --- proc chmatrix occasions= 72 groups= 1 etype= MultScalOcc 
+ INPUT --- Nodes= 101 icovar = 3  mixtures = 3 ICMeans NoHist hist= 24 
+ INPUT --- ;
+ INPUT ---    time interval 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+ INPUT ---     1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+ INPUT ---    1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 ;
+ INPUT ---      icovariates alpha Temp beta ;
+ INPUT ---    glabel(1)=Group 1;
+
+      Number of unique encounter histories read was 24.
+
+      Number of individual covariates read was 3.
+      Time interval lengths are all equal to 1.
+
+      Data type number is 123
+      Data type is Multi-scale occupancy estimation
+
+ For procedure chmatrix CPU Time was 0.001 secs and System Time was 0.001 secs.
+
+Program  MARK  - Survival Rate Estimation with Capture-Recapture Data
+ gfortran(dble/PIM2) Vers. 11.2 Nov 2025  23-Dec-2025 20:34:22    Page  002
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ 
+
+
+ INPUT --- proc estimate link=Logit NOLOOP varest=2ndPart    ;
+ INPUT --- model={ Psi(~alpha + Temp)Theta(~beta + Temp)p(~beta + 
+ INPUT --- Temp) };
+ INPUT ---    group=1 Psi    rows=1 cols=1 Square ;
+ INPUT ---        1 ;
+ INPUT ---    group=1 Theta    rows=1 cols=24 Square ;
+ INPUT ---        2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 ;
+ INPUT ---    group=1 p  Primary 1  rows=1 cols=3 Square ;
+ INPUT ---        3 3 3 ;
+ INPUT ---    group=1 p  Primary 2  rows=1 cols=3 Square ;
+ INPUT ---        3 3 3 ;
+ INPUT ---    group=1 p  Primary 3  rows=1 cols=3 Square ;
+ INPUT ---        3 3 3 ;
+ INPUT ---    group=1 p  Primary 4  rows=1 cols=3 Square ;
+ INPUT ---        3 3 3 ;
+ INPUT ---    group=1 p  Primary 5  rows=1 cols=3 Square ;
+ INPUT ---        3 3 3 ;
+ INPUT ---    group=1 p  Primary 6  rows=1 cols=3 Square ;
+ INPUT ---        3 3 3 ;
+ INPUT ---    group=1 p  Primary 7  rows=1 cols=3 Square ;
+ INPUT ---        3 3 3 ;
+ INPUT ---    group=1 p  Primary 8  rows=1 cols=3 Square ;
+ INPUT ---        3 3 3 ;
+ INPUT ---    group=1 p  Primary 9  rows=1 cols=3 Square ;
+ INPUT ---        3 3 3 ;
+ INPUT ---    group=1 p  Primary 10  rows=1 cols=3 Square ;
+ INPUT ---        3 3 3 ;
+ INPUT ---    group=1 p  Primary 11  rows=1 cols=3 Square ;
+ INPUT ---        3 3 3 ;
+ INPUT ---    group=1 p  Primary 12  rows=1 cols=3 Square ;
+ INPUT ---        3 3 3 ;
+ INPUT ---    group=1 p  Primary 13  rows=1 cols=3 Square ;
+ INPUT ---        3 3 3 ;
+ INPUT ---    group=1 p  Primary 14  rows=1 cols=3 Square ;
+ INPUT ---        3 3 3 ;
+ INPUT ---    group=1 p  Primary 15  rows=1 cols=3 Square ;
+ INPUT ---        3 3 3 ;
+ INPUT ---    group=1 p  Primary 16  rows=1 cols=3 Square ;
+ INPUT ---        3 3 3 ;
+ INPUT ---    group=1 p  Primary 17  rows=1 cols=3 Square ;
+ INPUT ---        3 3 3 ;
+ INPUT ---    group=1 p  Primary 18  rows=1 cols=3 Square ;
+ INPUT ---        3 3 3 ;
+ INPUT ---    group=1 p  Primary 19  rows=1 cols=3 Square ;
+
+Program  MARK  - Survival Rate Estimation with Capture-Recapture Data
+ gfortran(dble/PIM2) Vers. 11.2 Nov 2025  23-Dec-2025 20:34:22    Page  003
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ 
+ INPUT ---        3 3 3 ;
+ INPUT ---    group=1 p  Primary 20  rows=1 cols=3 Square ;
+ INPUT ---        3 3 3 ;
+ INPUT ---    group=1 p  Primary 21  rows=1 cols=3 Square ;
+ INPUT ---        3 3 3 ;
+ INPUT ---    group=1 p  Primary 22  rows=1 cols=3 Square ;
+ INPUT ---        3 3 3 ;
+ INPUT ---    group=1 p  Primary 23  rows=1 cols=3 Square ;
+ INPUT ---        3 3 3 ;
+ INPUT ---    group=1 p  Primary 24  rows=1 cols=3 Square ;
+ INPUT ---        3 3 3 ;
+ INPUT ---    design matrix constraints=3 covariates=9;
+ INPUT ---        1 alpha Temp 0 0 0 0 0 0;
+ INPUT ---        0 0 0 1 beta Temp 0 0 0;
+ INPUT ---        0 0 0 0 0 0 1 beta Temp;
+ INPUT ---       blabel(1)=Psi:(Intercept);
+ INPUT ---       blabel(2)=Psi:alpha;
+ INPUT ---       blabel(3)=Psi:Temp;
+ INPUT ---       blabel(4)=Theta:(Intercept);
+ INPUT ---       blabel(5)=Theta:beta;
+ INPUT ---       blabel(6)=Theta:Temp;
+ INPUT ---       blabel(7)=p:(Intercept);
+ INPUT ---       blabel(8)=p:beta;
+ INPUT ---       blabel(9)=p:Temp;
+ INPUT ---       rlabel(1)=Psi g1 a0 t1;
+ INPUT ---       rlabel(2)=Theta g1 a0 t1;
+ INPUT ---       rlabel(3)=p g1 s1 t1;
+   Model is { Psi(~alpha + Temp)Theta(~beta + Temp)p(~beta + Temp) }
+
+ Link Function Used is LOGIT        
+
+ Variance Estimation Procedure Used is 2ndPart 
+ -2logL(saturated) = 0.0000000     
+ Effective Sample Size = 23
+
+ Number of function evaluations was 44 for 9 parameters.
+ For numerical optimization, CPU Time was 0.156 secs and System Time was 0.094 secs.
+ -2logL { Psi(~alpha + Temp)Theta(~beta + Temp)p(~beta + Temp) } = 702.00398     
+ Penalty { Psi(~alpha + Temp)Theta(~beta + Temp)p(~beta + Temp) } = 0.0000000     
+ Gradient { Psi(~alpha + Temp)Theta(~beta + Temp)p(~beta + Temp) }:
+   0.0000       0.0000       0.0000     -3.55540E-05 -5.35728E-06
+  9.65823E-06 -9.15129E-06   0.0000      5.34278E-06
+ Maximum ABS(G) { Psi(~alpha + Temp)Theta(~beta + Temp)p(~beta + Temp) } =  3.55540E-05
+ To compute VC matrix, CPU Time was 0.047 secs and System Time was 0.250 secs.
+ S Vector { Psi(~alpha + Temp)Theta(~beta + Temp)p(~beta + Temp) }:
+   85.43753      23.07454      11.15531      3.429284      1.389024    
+  0.1003854     0.1626253E-06 0.7621090E-07 0.1696124E-07
+ To invert VC matrix, CPU Time was 0.001 secs and System Time was 0.001 secs.
+
+Program  MARK  - Survival Rate Estimation with Capture-Recapture Data
+ gfortran(dble/PIM2) Vers. 11.2 Nov 2025  23-Dec-2025 20:34:23    Page  004
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ 
+ Ratio Threshold = 50.00 Max Gap (6/7) = 6.1728E+5 Next Max Gap (5/6) = 13.84
+ Gap Method for Num. of Estimated Parameters { Psi(~alpha + Temp)Theta(~beta + Temp)p(~beta + Temp) } = 6          
+ Threshold { Psi(~alpha + Temp)Theta(~beta + Temp)p(~beta + Temp) } = 0.7110804E-04           
+ Numerical Threshold Method for Num. of Estimated Parameters { Psi(~alpha + Temp)Theta(~beta + Temp)p(~beta + Temp) } = 6          
+ Number of Estimated Parameters { Psi(~alpha + Temp)Theta(~beta + Temp)p(~beta + Temp) } = 6          
+ DEVIANCE { Psi(~alpha + Temp)Theta(~beta + Temp)p(~beta + Temp) } = 702.00398               
+ DEVIANCE Degrees of Freedom { Psi(~alpha + Temp)Theta(~beta + Temp)p(~beta + Temp) } = 18          
+ c-hat { Psi(~alpha + Temp)Theta(~beta + Temp)p(~beta + Temp) } = 39.000221               
+ AIC { Psi(~alpha + Temp)Theta(~beta + Temp)p(~beta + Temp) } = 714.00398               
+ AICc { Psi(~alpha + Temp)Theta(~beta + Temp)p(~beta + Temp) } = 719.25398               
+ BIC { Psi(~alpha + Temp)Theta(~beta + Temp)p(~beta + Temp) } = 720.81694               
+ Pearson Chisquare { Psi(~alpha + Temp)Theta(~beta + Temp)p(~beta + Temp) } = 0.3793912E+16           
+
+
+ LOGIT Link Function Parameters of { Psi(~alpha + Temp)Theta(~beta + Temp)p(~beta + Temp) }
+                                                              95% Confidence Interval
+    Parameter                  Beta         Standard Error     Lower           Upper
+ -------------------------  --------------  --------------  --------------  --------------
+    1:Psi:(Intercept)        17.809403       5000.9867      -9784.1246       9819.7434    
+    2:Psi:alpha              0.3135508       377.28772      -739.17039       739.79749    
+    3:Psi:Temp              -1.4446309       3564.3846      -6987.6386       6984.7493    
+    4:Theta:(Intercept)     -0.2875159       0.3878657      -1.0477327       0.4727010    
+    5:Theta:beta             1.8482353       2.8720616      -3.7810055       7.4774761    
+    6:Theta:Temp            -0.8380194       0.3087861      -1.4432401      -0.2327988    
+    7:p:(Intercept)         -0.6673915       0.2674471      -1.1915878      -0.1431953    
+    8:p:beta                -1.3655020       1.5123396      -4.3296877       1.5986838    
+    9:p:Temp                 0.2618292       0.1984266      -0.1270870       0.6507455    
+
+
+   Real Function Parameters of { Psi(~alpha + Temp)Theta(~beta + Temp)p(~beta + Temp) }
+
+      Following estimates based on unstandardized individual covariate values:
+          Variable                 Value        
+          ----------------------  ------------- 
+          ALPHA                    4.5833333    
+          TEMP                    -0.4000000E-07
+          BETA                     0.1399832    
+                                                               95% Confidence Interval
+     Parameter                Estimate       Standard Error     Lower           Upper
+ --------------------------  --------------  --------------  --------------  --------------
+     1:Psi g1 a0 t1           1.0000000       0.1941294E-04   0.9999619       1.0000380       
+     2:Theta g1 a0 t1         0.4928020       0.0727671       0.3544795       0.6322354       
+     3:p g1 s1 t1             0.2976447       0.0401929       0.2252423       0.3818498       
+
+Program  MARK  - Survival Rate Estimation with Capture-Recapture Data
+ gfortran(dble/PIM2) Vers. 11.2 Nov 2025  23-Dec-2025 20:34:23    Page  005
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ 
+
+ To compute parameter estimates, CPU Time was 0.001 secs and System Time was 0.001 secs.
+
+ Attempted ordering of parameters by estimatibility:
+  7 4 9 6 8 5 2 1 3
+ Beta number 3 is a singular value.
+
+ For procedure estimate CPU Time was 0.203 secs and System Time was 0.391 secs.
+ INPUT --- proc stop;
+
+ For this job, CPU Time in mins was 0.004 and System Time in mins was 0.007.
+
+     Time Start = 20:34:22.895   Time End = 20:34:23.337
+
+ Wall Clock Time in mins for this job was 0.007.
+
+ Maximum of 73 words used.
+
+
+          E X E C U T I O N   S U C C E S S F U L

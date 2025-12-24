@@ -8,6 +8,7 @@ library(tidyr)
 library(dplyr)
 library(stringr)
 library(ggplot2)
+library(gt)
 
 # set working directories
 repo <- "C:/Users/rcscott/VTADS"
@@ -224,6 +225,19 @@ Lost <- c("07020207","07020209","04010209","04010213","08020210","05020203","110
           
 )
 
+Lost_df <- data.frame(SampleID = Lost)
+Lost_df_full_ID <- filter(Lost_df, str_length(SampleID) > 7)
+Lost_df_full_ID$ComplexID <- str_sub(Lost_df_full_ID$SampleID,1,2)
+Lost_df_full_ID$PondID <- str_sub(Lost_df_full_ID$SampleID,3,4)
+Lost_df_full_ID$Survey <- str_sub(Lost_df_full_ID$SampleID,5,6)
+Lost_df_full_ID$Catch <- str_sub(Lost_df_full_ID$SampleID,7,8)
+count(Lost_df_full_ID,Survey)
+Lost_df_count <- Lost_df_full_ID %>% group_by(ComplexID,Survey) %>% count()
+
+Lost_df_count %>% gt(row_group_as_column = T, 
+                     row_group.sep = getOption("gt.row_group.sep", ""))
+
+# I can't see a clear pattern in what's missing
 
 NoControls_2022 <- DiseaseData_2022_Full %>% filter(!str_detect(SampleID, "c|C")) #just making it so I can search 2022 w/o controls
 Missing_Field_2022 <- FieldData_2022 %>% filter(!(SampleID %in% Lost)) %>% anti_join(NoControls_2022, by = "SampleID")
@@ -232,27 +246,130 @@ Missing_Field_2022 <- FieldData_2022 %>% filter(!(SampleID %in% Lost)) %>% anti_
 Missing_Field_2022 <- Missing_Field_2022 %>% arrange(SiteID,Survey.Number,CatchOfDay)
 
 
+#I'm using # to indicate how confident I am in a mislabel
+### Means I'm confident I found the corresponding correct label
+## Means I'm pretty sure
+# I am unsure
+
 #SampleID 0301028 is a mislabel
 Missing_Field_2022 %>% filter(str_detect(SampleID,"030102"))
 DiseaseData_2022_Full %>% filter(str_detect(SampleID,"030102")) %>% arrange(CatchOfDay)
-# SampleID 0301028 could be 03010210 as it is missing
+DiseaseData_2022_wider[DiseaseData_2022_wider$SampleID == "0301028",1] <- "03010210"
+### SampleID 0301028 could be 03010210 as it is missing
 
-# SampleID 01030107 is a mislabel?
+# SampleID 01030107 is a mislabel
 Missing_Field_2022 %>% filter(str_detect(SampleID,"0301"))
-# I'm pretty confident this is 10030107
+DiseaseData_2022_wider[DiseaseData_2022_wider$SampleID == "01030107",1] <- "10030107"
+### I'm pretty confident this is 10030107
 
 # SampleID 09010203 is a mislabel
 Missing_Field_2022 %>% filter(str_detect(SampleID, "0902"))
-# I'm fairly confident this is 09020203
+### I'm fairly confident this is 09020203
+DiseaseData_2022_wider[DiseaseData_2022_wider$SampleID == "09010203",1] <- "09020203"
+# Replacing
 
 # SampleID 0903020 is a mislabel
 Missing_Field_2022 %>% filter(str_detect(SampleID,"0903"))
-# This could be 09030308 (only one missing from 09-03)
+## This could be 09030308 (only one missing from 09-03)
+DiseaseData_2022_wider[DiseaseData_2022_wider$SampleID == "0903020",1] <- "09030308"
+# Replacing
+
+# 20102010/30102030/20102060
+Missing_Field_2022 %>% filter(ComplexID == "3")
+## I think this is 03010210 (Only one missing from 03-01. No missing samples from 
+##02-01 make sense)
+# No idea on this one, so deleting
+DiseaseData_2022_wider <- filter(DiseaseData_2022_wider, SampleID != "20102010/30102030/20102060")
+# Replacing
+
+# 0902012 is a mislabel
+Missing_Field_2022 %>% filter(str_detect(SampleID,"0902"))
+### I'm fairly confident this is 09020212
+DiseaseData_2022_wider[DiseaseData_2022_wider$SampleID == "0902012",1] <- "09020212"
+
+
+# 0802010 is a mislabel
+Missing_Field_2022 %>% filter(str_detect(SampleID,"0802"))
+### I'm fairly confident this is 08020110
+DiseaseData_2022_wider[DiseaseData_2022_wider$SampleID == "0802010",1] <- "08020110"
+# Replacing
+
+# 0701012 is a mislabel
+Missing_Field_2022 %>% filter(str_detect(SampleID,"0701"))
+# Both 07010212 and 07010112 so not sure there's a way I can distinguish which is 
+# which so will just remove
+DiseaseData_2022_wider <- DiseaseData_2022_wider %>% filter(SampleID != "0701012")
+
+# 1003010 is a mislabel
+Missing_Field_2022 %>% filter(str_detect(SampleID,"1003"))
+### I'm confident this one is 10030310
+DiseaseData_2022_wider[DiseaseData_2022_wider$SampleID == "1003010",1] <- "10030310"
+# Replacing
+
+# 090308 is a mislabel
+Missing_Field_2022 %>% filter(str_detect(SampleID,"0903"))
+### I'm confident this is 09030308
+DiseaseData_2022_wider[DiseaseData_2022_wider$SampleID == "090308",1] <- "09030308"
+# Replacing
+
+# 11090312 is a mislabel
+Missing_Field_2022 %>% filter(ComplexID == "11")
+### I'm confident this is 11040312 
+DiseaseData_2022_wider[DiseaseData_2022_wider$SampleID == "11090312",1] <- "11040312"
+# Replacing
+
+
+# 100202011 is a mislabel
+Missing_Field_2022 %>% filter(str_detect(SampleID,"1002"))
+### Confident this is 10020211
+DiseaseData_2022_wider[DiseaseData_2022_wider$SampleID == "100202011",1] <- "10020211"
+# Replacing
+
+# 1203010 is a mislabel
+Missing_Field_2022 %>% filter(str_detect(SampleID,"1203"))
+### Confident this is 12030110
+DiseaseData_2022_wider[DiseaseData_2022_wider$SampleID == "1203010",1] <- "12030110"
+# Replacing
+
+
+# 080306 is a mislabel
+Missing_Field_2022 %>% filter(str_detect(SampleID,"08\\d{6}"))
+### Confident this is 08010306
+DiseaseData_2022_wider[DiseaseData_2022_wider$SampleID == "080306",1] <- "08010306"
+# Replace
+
+# 030102010 is a mislabel
+Missing_Field_2022 %>% filter(str_detect(SampleID,"0301\\d{4}"))
+### Confident this is 03010210
+
+DiseaseData_2022_wider[DiseaseData_2022_wider$SampleID == "030102010",1] <- "03010210"
+# Replace
+
+# 0902013 is a mislabel
+Missing_Field_2022 %>% filter(str_detect(SampleID, "0902"))
+### Confident this is 09020213
+DiseaseData_2022_wider[DiseaseData_2022_wider$SampleID == "0902013",1] <-"09020213"
+# Replace
+
+# 09010204 is a mislabel
+Missing_Field_2022 %>% filter(str_detect(SampleID, "09\\d{6}"))
+## This could be 09020204?
+
+DiseaseData_2022_wider[DiseaseData_2022_wider$SampleID == "09010204",1] <- "09020204"
+# Replace
+
+### Now let's left join again
+
+DiseaseData_2022_Full <- DiseaseData_2022_wider %>% left_join(FieldData_2022, by = "SampleID")
+#Stopped here 12/18/2025. Need to explore what samples are missing field data, which may inform which samples are mislabelled.
+nrow(Mislabelled_lab_2022)
+Mislabelled_lab_2022 <- DiseaseData_2022_Full %>% filter(!str_detect(SampleID, "c|C")) %>% anti_join(FieldData_2022, by = "SampleID")
+nrow(Mislabelled_lab_2022) # Now there's only 5 missing!
 ######################################################
 
 
 # Need to check field and extraction controls
-FieldControls2022 <- filter(DiseaseData_2022_wider, str_detect(Sample, "c|C") &
+FieldControls2022 <- filter(DiseaseData_2022_wider, str_detect(SampleID, "c|C") &
                               (Bd_1 < 45 | Bd_2 < 45 | FV3_1 < 45 | FV3_2 < 45))
 # 050103C def amplified. Will need to adjust cq threshold for that visit, probably to 36
 # 10013C Doesn't look like it actually amplified and can probs just be coded as 0
@@ -265,33 +382,111 @@ FieldControls2022 <- filter(DiseaseData_2022_wider, str_detect(Sample, "c|C") &
 
 
 # Change cQ to PA
-cq_threshold_2022 <- c(36,38,35)
+cq_threshold_2022 <- c(36,38,35,40) 
+# 36 for 05-01, visit 3
+# 38 for 12-03 visit 3
+# 35 for 07-02 visit 3
+# 40 for all the rest
 
+# St Albans N visit 3
+StAlbansN <- filter(DiseaseData_2022_Full, SiteID == "05-01", Survey.Number == "3") %>% 
+  mutate(BD_PA1 = case_when(Bd_1 < cq_threshold_2022[[1]] & Bd_1 > 3 ~ "1",
+                                                     Bd_1 >= cq_threshold_2022[[1]] & Bd_1 < 45 ~ NA,
+                                                     Bd_1 == 45 | Bd_1 <= 3 ~ "0"),
+                                  BD_PA2 = case_when(Bd_2 < cq_threshold_2022[[1]] & Bd_2 > 3 ~ "1",
+                                                     Bd_2 >= cq_threshold_2022[[1]] & Bd_2 < 45 ~ NA,
+                                                     Bd_2 == 45 | Bd_2 <= 3 ~ "0"),
+                                  FV3_PA1 = case_when(FV3_1 < cq_threshold_2022[[1]] & FV3_1 > 3 ~ "1",
+                                                      FV3_1 >= cq_threshold_2022[[1]] & FV3_1 < 45 ~ NA,
+                                                      FV3_1 == 45 | FV3_1 <= 3 ~ "0"),
+                                  FV3_PA2 = case_when(FV3_2 < cq_threshold_2022[[1]] & FV3_2 > 3 ~ "1",
+                                                      FV3_2 >= cq_threshold_2022[[1]] & FV3_2 < 45 ~ NA,
+                                                      FV3_2 == 45 | FV3_2 <= 3 ~ "0"))
+# Indian Brook 3 visit 3
+IndianBrook3 <- filter(DiseaseData_2022_Full, SiteID == "12-03", Survey.Number == "3") %>% 
+  mutate(BD_PA1 = case_when(Bd_1 < cq_threshold_2022[[2]] & Bd_1 > 3 ~ "1",
+                            Bd_1 >= cq_threshold_2022[[2]] & Bd_1 < 45 ~ NA,
+                            Bd_1 == 45 | Bd_1 <= 3 ~ "0"),
+         BD_PA2 = case_when(Bd_2 < cq_threshold_2022[[2]] & Bd_2 > 3 ~ "1",
+                            Bd_2 >= cq_threshold_2022[[2]] & Bd_2 < 45 ~ NA,
+                            Bd_2 == 45 | Bd_2 <= 3 ~ "0"),
+         FV3_PA1 = case_when(FV3_1 < cq_threshold_2022[[2]] & FV3_1 > 3 ~ "1",
+                             FV3_1 >= cq_threshold_2022[[2]] & FV3_1 < 45 ~ NA,
+                             FV3_1 == 45 | FV3_1 <= 3 ~ "0"),
+         FV3_PA2 = case_when(FV3_2 < cq_threshold_2022[[2]] & FV3_2 > 3 ~ "1",
+                             FV3_2 >= cq_threshold_2022[[2]] & FV3_2 < 45 ~ NA,
+                             FV3_2 == 45 | FV3_2 <= 3 ~ "0"))
+# Rutland 2 visit 3
+Rutland2 <- filter(DiseaseData_2022_Full, SiteID == "07-02", Survey.Number == "3") %>% 
+  mutate(BD_PA1 = case_when(Bd_1 < cq_threshold_2022[[3]] & Bd_1 > 3 ~ "1",
+                            Bd_1 >= cq_threshold_2022[[3]] & Bd_1 < 45 ~ NA,
+                            Bd_1 == 45 | Bd_1 <= 3 ~ "0"),
+         BD_PA2 = case_when(Bd_2 < cq_threshold_2022[[3]] & Bd_2 > 3 ~ "1",
+                            Bd_2 >= cq_threshold_2022[[3]] & Bd_2 < 45 ~ NA,
+                            Bd_2 == 45 | Bd_2 <= 3 ~ "0"),
+         FV3_PA1 = case_when(FV3_1 < cq_threshold_2022[[3]] & FV3_1 > 3 ~ "1",
+                             FV3_1 >= cq_threshold_2022[[3]] & FV3_1 < 45 ~ NA,
+                             FV3_1 == 45 | FV3_1 <= 3 ~ "0"),
+         FV3_PA2 = case_when(FV3_2 < cq_threshold_2022[[3]] & FV3_2 > 3 ~ "1",
+                             FV3_2 >= cq_threshold_2022[[3]] & FV3_2 < 45 ~ NA,
+                             FV3_2 == 45 | FV3_2 <= 3 ~ "0"))
+# Everything else
+GoodSamples_2022 <- DiseaseData_2022_Full %>% 
+  anti_join(StAlbansN, by = "SampleID") %>%
+  anti_join(IndianBrook3, by = "SampleID") %>%
+  anti_join(Rutland2, by = "SampleID")
 
+GoodSamples_2022 <- GoodSamples_2022 %>% 
+  mutate(BD_PA1 = case_when(Bd_1 < cq_threshold_2022[[4]] & Bd_1 > 3 ~ "1",
+                            Bd_1 >= cq_threshold_2022[[4]] & Bd_1 < 45 ~ NA,
+                            Bd_1 == 45 | Bd_1 <= 3 ~ "0"),
+         BD_PA2 = case_when(Bd_2 < cq_threshold_2022[[4]] & Bd_2 > 3 ~ "1",
+                            Bd_2 >= cq_threshold_2022[[4]] & Bd_2 < 45 ~ NA,
+                            Bd_2 == 45 | Bd_2 <= 3 ~ "0"),
+         FV3_PA1 = case_when(FV3_1 < cq_threshold_2022[[4]] & FV3_1 > 3 ~ "1",
+                             FV3_1 >= cq_threshold_2022[[4]] & FV3_1 < 45 ~ NA,
+                             FV3_1 == 45 | FV3_1 <= 3 ~ "0"),
+         FV3_PA2 = case_when(FV3_2 < cq_threshold_2022[[4]] & FV3_2 > 3 ~ "1",
+                             FV3_2 >= cq_threshold_2022[[4]] & FV3_2 < 45 ~ NA,
+                             FV3_2 == 45 | FV3_2 <= 3 ~ "0"))
+GoodSamples_2022 <- GoodSamples_2022 %>% filter(!str_detect(SampleID,"C"))
 
+DiseaseData_2022_Full <- rbind(GoodSamples_2022,
+              StAlbansN,
+              IndianBrook3,
+              Rutland2)
+
+DiseaseData_2022_Full <-  DiseaseData_2022_Full %>%
+  relocate(BD_PA1,.before = Year) %>%
+  relocate(BD_PA2, .before = Year) %>%
+  relocate(FV3_PA1,.before = Year) %>%
+  relocate(FV3_PA2,.before = Year)
+
+# At this point I should filter for GF's only
+DiseaseData_2022_GF <- filter(DiseaseData_2022_Full, Species == "GF")
 
 # # Remove negs and controls
 # DiseaseData2_2022 <- DiseaseData2_2022 %>% filter(!is.na(SiteID))
 # # DiseaseData2_2022$CatchOfDay <- sprintf("%02d",DiseaseData2_2022$CatchOfDay) #to make everything 2 digits.
 # Don't need this for 2022 data
-DiseaseData2_2022$LabNumber <- NA # A somewhat arbitrary number I'm using to order samples for pivoting
+DiseaseData_2022_GF$LabNumber <- NA # A somewhat arbitrary number I'm using to order samples for pivoting
 
-Complex <- 1:max(DiseaseData2_2022$ComplexID)
-Pond <- 1:max(DiseaseData2_2022$PondID)
-Visit <- 1:max(DiseaseData2_2022$Survey.Number)
-
+Complex <- 1:max(DiseaseData_2022_GF$ComplexID)
+Pond <- 1:max(DiseaseData_2022_GF$PondID)
+Visit <- 1:max(DiseaseData_2022_GF$Survey.Number)
+DiseaseData_2022_GF <- DiseaseData_2022_GF %>% arrange(SiteID,Survey.Number,CatchOfDay)
 for (i in 1:length(Complex)) {
   for (j in 1:length(Pond)) {
     for (k in 1:length(Visit)) {
-      df <- DiseaseData2_2022 %>% filter(ComplexID == as.character(i) &
+      df <- DiseaseData_2022_GF %>% filter(ComplexID == as.character(i) &
                                            PondID == as.character(j) &
                                            Survey.Number == as.character(k))
       if(nrow(df) == 0) next
       df <- df %>% arrange(CatchOfDay)
       df$LabNumber <- 1:nrow(df)
-      DiseaseData2_2022$LabNumber[DiseaseData2_2022$ComplexID == as.character(i) &
-                                    DiseaseData2_2022$PondID == as.character(j) &
-                                    DiseaseData2_2022$Survey.Number == as.character(k)] <- df$LabNumber
+      DiseaseData_2022_GF$LabNumber[DiseaseData_2022_GF$ComplexID == as.character(i) &
+                                      DiseaseData_2022_GF$PondID == as.character(j) &
+                                      DiseaseData_2022_GF$Survey.Number == as.character(k)] <- df$LabNumber
       
     }
     
@@ -299,27 +494,30 @@ for (i in 1:length(Complex)) {
   
 }
 
-max(DiseaseData2_2022$LabNumber)
-DiseaseData2_2022$LabNumber <- as.numeric(DiseaseData2_2022$LabNumber)
-DiseaseData2_2022 <- filter(DiseaseData2_"2022", LabNumber < 13) #Just gonna remove the 2 cases where we caught a 13th gf
+max(DiseaseData_2022_GF$LabNumber)
+DiseaseData_2022_GF$LabNumber <- as.numeric(DiseaseData_2022_GF$LabNumber)
+View(filter(DiseaseData_2022_GF, LabNumber > 13))
+View(filter(DiseaseData_2022_GF,SiteID == "03-01", Survey.Number == "2"))
+DiseaseData_2022_GF <- filter(DiseaseData_2022_GF, LabNumber < 13) 
+#Just gonna remove the 1 case where we caught a 13th gf
 
 #Now I need to pivot it in a way that it can be read by an occ mod in unmarked
 #BD
-BD_2022 <- DiseaseData2_2022 %>% select(!c(RV_Rep1:RV_Rep"2",SiteID,WaterTemp.Nearest, CatchOfDay,Species))
-BD_2022_longer <- BD_2022 %>% pivot_longer(cols = BD_Rep1:BD_Rep"2",names_to = "Rep", values_to = "PA")
-BD_2022_longer$Rep <- str_remove(BD_2022_longer$Rep, "BD_")
+BD_2022 <- DiseaseData_2022_GF %>% select(!c(SampleID,Year,Bd_1:FV3_2,FV3_PA1:FV3_PA2,SiteID,WaterTemp.Nearest, CatchOfDay,Species))
+BD_2022_longer <- BD_2022 %>% pivot_longer(cols = BD_PA1:BD_PA2,names_to = "Rep", values_to = "PA")
+BD_2022_longer$Rep <- str_remove(BD_2022_longer$Rep, "BD_PA")
 BD_2022_wide <- BD_2022_longer %>% 
-  select(!SampleID) %>%
   pivot_wider(names_from = c(Survey.Number, LabNumber, Rep),
               values_from = PA,
               names_sort = T)
+StAlbansS <- c(5,2,rep(NA,ncol(BD_2022_wide)-2))
+BD_2022_wide <- rbind(BD_2022_wide, StAlbansS)
 BD_2022_wide <- arrange(BD_2022_wide,as.numeric(ComplexID),as.numeric(PondID))
 #RV
-RV_2022 <- DiseaseData2_2022 %>% select(!c(BD_Rep1:BD_Rep"2",SiteID,WaterTemp.Nearest, CatchOfDay,Species))
-RV_2022_longer <- RV_2022 %>% pivot_longer(cols = RV_Rep1:RV_Rep"2",names_to = "Rep", values_to = "PA")
-RV_2022_longer$Rep <- str_remove(RV_2022_longer$Rep, "RV_")
+RV_2022 <- DiseaseData_2022_GF %>% select(!c(Bd_1:FV3_2,BD_PA1:BD_PA2,SiteID,WaterTemp.Nearest, CatchOfDay,Species,SampleID,Year))
+RV_2022_longer <- RV_2022 %>% pivot_longer(cols = FV3_PA1:FV3_PA2,names_to = "Rep", values_to = "PA")
+RV_2022_longer$Rep <- str_remove(RV_2022_longer$Rep, "FV3_PA")
 RV_2022_wide <- RV_2022_longer %>% 
-  select(!SampleID) %>%
   pivot_wider(names_from = c(Survey.Number, LabNumber, Rep),
               values_from = PA,
               names_sort = T)
@@ -332,7 +530,7 @@ RV_2022_wide <- RV_2022_longer %>%
 LabIDKey <- read.csv("LabIDKey.csv")
 LabIDKey$LabID <- str_remove(LabIDKey$LabID,"'")
 LabIDKey <- LabIDKey %>% select(!BD_Rep1)
-anti_join(LabIDKey, DiseaseData_"2024", by = "LabID")
+anti_join(LabIDKey, DiseaseData_2024, by = "LabID")
 FieldData2 <- FieldData2 %>% select(!Species)
 
 DiseaseData_2024$Target <- ifelse(DiseaseData_2024$Fluor == "FAM", "Bd","FV3")
@@ -349,7 +547,7 @@ DiseaseData_2024_wide <- DiseaseData_2024 %>% select(!c(Fluor,Well)) %>%
 # May want to left join before I change to P/A
 DiseaseData_2024_wide <- DiseaseData_2024_wide %>%
   left_join(LabIDKey, by = "LabID") %>%
-  left_join(FieldData"2", by = "SampleID")
+  left_join(FieldData2, by = "SampleID")
 
 # Establishing P/A(detection/nondetection)
 
@@ -361,84 +559,86 @@ cq_threshold <- c(39,37,37,40)
 # 40 = standard threshold for all other ponds
 
 
-# First making PA for Gilbrook"02", visit 1 
+# First making PA for Gilbrook02, visit 1 
 Gilbrook02_01 <- DiseaseData_2024_wide %>% filter(SiteID == "09-02" & 
                                                     Survey.Number == "1")
 
 Gilbrook02_01 <- Gilbrook02_01 %>% mutate(BD_PA1 = case_when(Bd_1 < cq_threshold[[1]] & Bd_1 > 3 ~ "1",
                                                              Bd_1 >= cq_threshold[[1]] & Bd_1 < 45 ~ NA,
-                                                             Bd_1 == 45 ~ 0),
+                                                             Bd_1 == 45 | Bd_1 <= 3 ~ "0"),
                                           BD_PA2 = case_when(Bd_2 < cq_threshold[[1]] & Bd_2 > 3 ~ "1",
                                                              Bd_2 >= cq_threshold[[1]] & Bd_2 < 45 ~ NA,
-                                                             Bd_2 == 45 ~ 0),
+                                                             Bd_2 == 45 | Bd_2 <= 3 ~ "0"),
                                           FV3_PA1 = case_when(FV3_1 < cq_threshold[[1]] & FV3_1 > 3 ~ "1",
                                                            FV3_1 >= cq_threshold[[1]] & FV3_1 < 45 ~ NA,
-                                                           FV3_1 == 45 ~ 0),
+                                                           FV3_1 == 45 | FV3_1 <= 3 ~ "0"),
                                           FV3_PA2 = case_when(FV3_2 < cq_threshold[[1]] & FV3_2 > 3 ~ "1",
                                                               FV3_2 >= cq_threshold[[1]] & FV3_2 < 45 ~ NA,
-                                                              FV3_2 == 45 ~ 0))
+                                                              FV3_2 == 45 | FV3_2 <= 3 ~ "0"))
 # Next making PA for Audobon visit 3
 Audobon3 <- DiseaseData_2024_wide %>% filter(SiteID == "02-01" &
                                                Survey.Number == "3")
 Audobon3 <- Audobon3 %>% mutate(BD_PA1 = case_when(Bd_1 < cq_threshold[[2]] & Bd_1 > 3 ~ "1",
-                                                             Bd_1 >= cq_threshold[[2]] & Bd_1 < 45 ~ NA,
-                                                             Bd_1 == 45 ~ 0),
-                                          BD_PA2 = case_when(Bd_2 < cq_threshold[[2]] & Bd_2 > 3 ~ "1",
-                                                             Bd_2 >= cq_threshold[[2]] & Bd_2 < 45 ~ NA,
-                                                             Bd_2 == 45 ~ 0),
-                                          FV3_PA1 = case_when(FV3_1 < cq_threshold[[2]] & FV3_1 > 3 ~ "1",
-                                                              FV3_1 >= cq_threshold[[2]] & FV3_1 < 45 ~ NA,
-                                                              FV3_1 == 45 ~ 0),
-                                          FV3_PA2 = case_when(FV3_2 < cq_threshold[[2]] & FV3_2 > 3 ~ "1",
-                                                              FV3_2 >= cq_threshold[[2]] & FV3_2 < 45 ~ NA,
-                                                              FV3_2 == 45 ~ 0))
+                                                   Bd_1 >= cq_threshold[[2]] & Bd_1 < 45 ~ NA,
+                                                   Bd_1 == 45 | Bd_1 <= 3 ~ "0"),
+                                BD_PA2 = case_when(Bd_2 < cq_threshold[[2]] & Bd_2 > 3 ~ "1",
+                                                   Bd_2 >= cq_threshold[[2]] & Bd_2 < 45 ~ NA,
+                                                   Bd_2 == 45 | Bd_2 <= 3 ~ "0"),
+                                FV3_PA1 = case_when(FV3_1 < cq_threshold[[2]] & FV3_1 > 3 ~ "1",
+                                                    FV3_1 >= cq_threshold[[2]] & FV3_1 < 45 ~ NA,
+                                                    FV3_1 == 45 | FV3_1 <= 3 ~ "0"),
+                                FV3_PA2 = case_when(FV3_2 < cq_threshold[[2]] & FV3_2 > 3 ~ "1",
+                                                    FV3_2 >= cq_threshold[[2]] & FV3_2 < 45 ~ NA,
+                                                    FV3_2 == 45 | FV3_2 <= 3 ~ "0"))
 
 # Makeing PA for IndianBrook 02 visit 3
 IndianBrook3 <- DiseaseData_2024_wide %>% filter(SiteID == "12-02" &
                                                    Survey.Number == "3")
 IndianBrook3 <- IndianBrook3 %>% mutate(BD_PA1 = case_when(Bd_1 < cq_threshold[[3]] & Bd_1 > 3 ~ "1",
-                                                   Bd_1 >= cq_threshold[[3]] & Bd_1 < 45 ~ NA,
-                                                   Bd_1 == 45 ~ 0),
-                                BD_PA2 = case_when(Bd_2 < cq_threshold[[3]] & Bd_2 > 3 ~ "1",
-                                                   Bd_2 >= cq_threshold[[3]] & Bd_2 < 45 ~ NA,
-                                                   Bd_2 == 45 ~ 0),
-                                FV3_PA1 = case_when(FV3_1 < cq_threshold[[3]] & FV3_1 > 3 ~ "1",
-                                                    FV3_1 >= cq_threshold[[3]] & FV3_1 < 45 ~ NA,
-                                                    FV3_1 == 45 ~ 0),
-                                FV3_PA2 = case_when(FV3_2 < cq_threshold[[3]] & FV3_2 > 3 ~ "1",
-                                                    FV3_2 >= cq_threshold[[3]] & FV3_2 < 45 ~ NA,
-                                                    FV3_2 == 45 ~ 0))
+                                                           Bd_1 >= cq_threshold[[3]] & Bd_1 < 45 ~ NA,
+                                                           Bd_1 == 45 | Bd_1 <= 3 ~ "0"),
+                                        BD_PA2 = case_when(Bd_2 < cq_threshold[[3]] & Bd_2 > 3 ~ "1",
+                                                           Bd_2 >= cq_threshold[[3]] & Bd_2 < 45 ~ NA,
+                                                           Bd_2 == 45 | Bd_2 <= 3 ~ "0"),
+                                        FV3_PA1 = case_when(FV3_1 < cq_threshold[[3]] & FV3_1 > 3 ~ "1",
+                                                            FV3_1 >= cq_threshold[[3]] & FV3_1 < 45 ~ NA,
+                                                            FV3_1 == 45 | FV3_1 <= 3 ~ "0"),
+                                        FV3_PA2 = case_when(FV3_2 < cq_threshold[[3]] & FV3_2 > 3 ~ "1",
+                                                            FV3_2 >= cq_threshold[[3]] & FV3_2 < 45 ~ NA,
+                                                            FV3_2 == 45 | FV3_2 <= 3 ~ "0"))
 
 # Now need to make a filter for all other samples
 GoodSamples <- DiseaseData_2024_wide %>% 
-  anti_join(Gilbrook02_"01", by = "LabID") %>%
-  anti_join(Audobon"3", by = "LabID") %>%
-  anti_join(IndianBrook"3", by = "LabID")
+  anti_join(Gilbrook02_01, by = "LabID") %>%
+  anti_join(Audobon3, by = "LabID") %>%
+  anti_join(IndianBrook3, by = "LabID")
 FieldControls <- GoodSamples %>% filter(str_detect(SampleID,"C|NEG"))
 GoodSamples <- GoodSamples %>% filter(!str_detect(SampleID,"C|NEG"))
 GoodSamples <- GoodSamples %>% mutate(BD_PA1 = case_when(Bd_1 < cq_threshold[[4]] & Bd_1 > 3 ~ "1",
                                                          Bd_1 >= cq_threshold[[4]] & Bd_1 < 45 ~ NA,
-                                                         Bd_1 == 45 ~ 0),
+                                                         Bd_1 == 45 | Bd_1 <= 3 ~ "0"),
                                       BD_PA2 = case_when(Bd_2 < cq_threshold[[4]] & Bd_2 > 3 ~ "1",
                                                          Bd_2 >= cq_threshold[[4]] & Bd_2 < 45 ~ NA,
-                                                         Bd_2 == 45 ~ 0),
+                                                         Bd_2 == 45 | Bd_2 <= 3 ~ "0"),
                                       FV3_PA1 = case_when(FV3_1 < cq_threshold[[4]] & FV3_1 > 3 ~ "1",
                                                           FV3_1 >= cq_threshold[[4]] & FV3_1 < 45 ~ NA,
-                                                          FV3_1 == 45 ~ 0),
+                                                          FV3_1 == 45 | FV3_1 <= 3 ~ "0"),
                                       FV3_PA2 = case_when(FV3_2 < cq_threshold[[4]] & FV3_2 > 3 ~ "1",
                                                           FV3_2 >= cq_threshold[[4]] & FV3_2 < 45 ~ NA,
-                                                          FV3_2 == 45 ~ 0))
+                                                          FV3_2 == 45 | FV3_2 <= 3 ~ "0"))
 
 DiseaseData2_2024 <- rbind(GoodSamples,
-                           Audobon"3",
-                           Gilbrook02_"01",
+                           Audobon3,
+                           Gilbrook02_01,
                            IndianBrook3)
 nrow(DiseaseData2_2024) + nrow(FieldControls)
 
 # #naive prevalence
+DiseaseData2_2024$BD_PA1 <- as.numeric(DiseaseData2_2024$BD_PA1)
+DiseaseData2_2024$BD_PA2 <- as.numeric(DiseaseData2_2024$BD_PA2)
 BdPrev <- DiseaseData2_2024 %>%
-  mutate(Bd_occ = case_when(BD_PA1 == 1 | BD_PA2 == 1 ~ "1",
-                            BD_PA2 == 0 & BD_PA2 == 0 ~ "0",
+  mutate(Bd_occ = case_when(BD_PA1 == 1 | BD_PA2 == 1 ~ 1,
+                            BD_PA2 == 0 & BD_PA2 == 0 ~ 0,
                             is.na(BD_PA2) & is.na(BD_PA2) ~ NA)) %>%
   select(!c(LabID:SampleID,BD_PA1:FV3_PA2)) %>%
   group_by(SiteID,Survey.Number) %>%
@@ -477,6 +677,8 @@ Complex <- 1:max(DiseaseData2_2024$ComplexID)
 Pond <- 1:max(DiseaseData2_2024$PondID)
 Visit <- 1:max(DiseaseData2_2024$Survey.Number)
 DiseaseData2_2024$LabNumber <- NA
+DiseaseData2_2024 <- DiseaseData2_2024 %>% arrange(SiteID,Survey.Number,CatchOfDay)
+
 for (i in 1:length(Complex)) {
   for (j in 1:length(Pond)) {
     for (k in 1:length(Visit)) {
@@ -495,6 +697,7 @@ for (i in 1:length(Complex)) {
   }
 
 }
+
 # Okay so actual max number of 13. That could screw things up a little
 # Stopped here for today (10/01/2025). Need to next pivot wider based on Visit number + LabNumber. Should actually be pretty easy from here... I think
 
@@ -506,12 +709,12 @@ for (i in 1:length(Complex)) {
 #                          DiseaseData2_2024$PondID == as.character(2) &
 #                          DiseaseData2_2024$Survey.Number == as.character(1)]
 max(DiseaseData2_2024$LabNumber)
-DiseaseData2_2024 <- filter(DiseaseData2_"2024", LabNumber <= 12) #Just gonna remove the 2 cases where we caught a 13th gf
+DiseaseData2_2024 <- filter(DiseaseData2_2024, LabNumber <= 12) #Just gonna remove the 2 cases where we caught a 13th gf
 
 #Now I need to pivot it in a way that it can be read by an occ mod in unmarked
 #BD
 BD_2024 <- DiseaseData2_2024 %>% select(!c(LabID:SampleID,WaterTemp.Nearest, CatchOfDay, FV3_PA1:FV3_PA2))
-BD_2024_longer <- BD_2024 %>% pivot_longer(cols = BD_PA1:BD_PA"2",names_to = "Rep", values_to = "PA")
+BD_2024_longer <- BD_2024 %>% pivot_longer(cols = BD_PA1:BD_PA2,names_to = "Rep", values_to = "PA")
 BD_2024_longer$Rep <- str_remove(BD_2024_longer$Rep, "BD_PA")
 BD_2024_wide <- BD_2024_longer %>% 
   pivot_wider(names_from = c(Survey.Number, LabNumber, Rep),
@@ -531,8 +734,9 @@ BD_2024_wide <- arrange(BD_2024_wide,as.numeric(ComplexID),as.numeric(PondID))
 
 #RV
 RV_2024 <- DiseaseData2_2024 %>% select(!c(LabID:SampleID,WaterTemp.Nearest, CatchOfDay, BD_PA1:BD_PA2))
-RV_2024_longer <- RV_2024 %>% pivot_longer(cols = FV3_PA1:FV3_PA"2",names_to = "Rep", values_to = "PA")
+RV_2024_longer <- RV_2024 %>% pivot_longer(cols = FV3_PA1:FV3_PA2,names_to = "Rep", values_to = "PA")
 RV_2024_longer$Rep <- str_remove(RV_2024_longer$Rep, "FV3_PA")
+RV_2024_longer$PA <- as.numeric(RV_2024_longer$PA)
 RV_2024_wide <- RV_2024_longer %>% 
   pivot_wider(names_from = c(Survey.Number, LabNumber, Rep),
               values_from = PA,
@@ -544,19 +748,19 @@ RV_2024_wide <- RV_2024_longer %>%
 # RV_2024_wide <- arrange(RV_2024_wide,as.numeric(ComplexID),as.numeric(PondID))
 
 ### Getting naive occupancy of FV3
-RV_2024_wide$Occ <- ifelse(rowSums(RV_2024_wide[,4:ncol(RV_2024_wide)],na.rm = T) > "0", 
-                            "1",0)
+RV_2024_wide$Occ <- ifelse(rowSums(RV_2024_wide[,5:ncol(RV_2024_wide)],na.rm = T) > 0, 
+                            1,0)
 sum(RV_2024_wide$Occ)/nrow(RV_2024_wide) # naive occupancy of 0.333
 
 #naive prevalence
 RVPrev <- DiseaseData2_2024 %>% 
-  mutate(FV3_occ = case_when(FV3_PA1 == 1 | FV3_PA2 == 1 ~ "1",
-                            FV3_PA2 == 0 & FV3_PA2 == 0 ~ "0",
+  mutate(FV3_occ = case_when(FV3_PA1 == 1 | FV3_PA2 == 1 ~ 1,
+                            FV3_PA2 == 0 & FV3_PA2 == 0 ~ 0,
                             is.na(FV3_PA2) & is.na(FV3_PA2) ~ NA)) %>%
   select(!c(LabID:SampleID,FV3_PA1:FV3_PA2)) %>% 
   group_by(SiteID, Survey.Number) %>%
   dplyr::summarise(FV3_prev = sum(FV3_occ,na.rm = T)/n())
-range(RVPrev$FV3_prev)
+range(RVPrev$FV3_prev) # ranges from 0-0.583
 ggplot(RVPrev, aes(x = Survey.Number, y = FV3_prev, colour = SiteID))+
   geom_point()+
   geom_line()+
@@ -566,7 +770,7 @@ ggplot(RVPrev, aes(x = Survey.Number, y = FV3_prev, colour = SiteID))+
 #Now I need to pivot it in a way that it can be read by an occ mod in unmarked
 #BD
 RV_2024 <- DiseaseData2_2024 %>% select(!c(LabID:SampleID,WaterTemp.Nearest, CatchOfDay, BD_PA1:BD_PA2))
-RV_2024_longer <- RV_2024 %>% pivot_longer(cols = FV3_PA1:FV3_PA"2",names_to = "Rep", values_to = "PA")
+RV_2024_longer <- RV_2024 %>% pivot_longer(cols = FV3_PA1:FV3_PA2,names_to = "Rep", values_to = "PA")
 RV_2024_longer$Rep <- str_remove(RV_2024_longer$Rep, "BD_PA")
 RV_2024_wide <- RV_2024_longer %>% 
   pivot_wider(names_from = c(Survey.Number, LabNumber, Rep),
@@ -581,24 +785,30 @@ save(BD_2022_wide,RV_2022_wide, file = "occModdata_2022.RData")
 save(BD_2024_wide,RV_2024_wide, file = "occModdata_2024.RData")
 ### Okay last thing, need to setup water temp data to be read into occmods ###
 # 2022
-WaterTemp_2022 <- DiseaseData2_2022 %>% select(!c(SampleID,BD_Rep1:RV_Rep"2",SiteID,CatchOfDay,Species))
+WaterTemp_2022 <- DiseaseData_2022_GF %>% select(!c(SampleID,Bd_1:FV3_PA2,SiteID,CatchOfDay,Species))
 WaterTemp_2022$ComplexID <- sprintf("%02d",WaterTemp_2022$ComplexID)
 WaterTemp_2022 <- as.data.frame(WaterTemp_2022)
 WaterTemp_2022$WaterTemp.Nearest[WaterTemp_2022$WaterTemp.Nearest == ""] <- NA 
 WaterTemp_2022_wider <- WaterTemp_2022 %>% pivot_wider(names_from = c(Survey.Number, LabNumber),
                                                    values_from = WaterTemp.Nearest,
                                                    names_sort = T)
-
-WaterTemp_2022_duplicate <- merge(WaterTemp_2022_wider,WaterTemp_2022_wider, by = c("ComplexID","PondID"))
+StAlbansS <- c(2022,"05",2,rep(NA,ncol(WaterTemp_2022_wider)-3))
+WaterTemp_2022_wider <- rbind(WaterTemp_2022_wider, StAlbansS)
+WaterTemp_2022_wider <- WaterTemp_2022_wider %>% arrange(ComplexID,PondID)
+WaterTemp_2022_duplicate <- merge(WaterTemp_2022_wider,WaterTemp_2022_wider, by = c("ComplexID","PondID","Year"))
 col.names <- colnames(WaterTemp_2022_duplicate)
 col.names <- col.names %>% str_replace("(\\d).x","\\1_1") %>% str_replace(".y","_2")
 col.names
 colnames(WaterTemp_2022_duplicate) <- col.names
 
 WaterTemp_2022_duplicate <- WaterTemp_2022_duplicate[,order(names(WaterTemp_2022_duplicate))] #now data is organized
-
+WaterTemp_2022_duplicate <- WaterTemp_2022_duplicate %>% 
+  relocate(Year,.before = "1_1_1") %>%
+  relocate(ComplexID,.before = "1_1_1") %>%
+  relocate(PondID, .before = "1_1_1")
+  
 # 2024
-WaterTemp_2024 <- DiseaseData2_2024 %>% select(!c(LabID,SampleID,BD_Rep1:RV_Rep"2",SiteID,CatchOfDay))
+WaterTemp_2024 <- DiseaseData2_2024 %>% select(!c(LabID,SampleID,Bd_1:FV3_2,BD_PA1:FV3_PA2,SiteID,CatchOfDay))
 WaterTemp_2024$ComplexID <- sprintf("%02d",WaterTemp_2024$ComplexID)
 WaterTemp_2024 <- as.data.frame(WaterTemp_2024)
 WaterTemp_2024$WaterTemp.Nearest[WaterTemp_2024$WaterTemp.Nearest == ""] <- NA 
@@ -606,17 +816,17 @@ WaterTemp_2024_wider <- WaterTemp_2024 %>% pivot_wider(names_from = c(Survey.Num
                                                        values_from = WaterTemp.Nearest,
                                                        names_sort = T)
 
-dummy_water_data  <-  c("08","1",rep(NA, times = ncol(WaterTemp_2024_wider)-2))
-WaterTemp_2024_wider <- rbind(WaterTemp_2024_wider,dummy_water_data)
-WaterTemp_2024_wider <- arrange(WaterTemp_2024_wider, ComplexID, PondID)
-WaterTemp_2024_duplicate <- merge(WaterTemp_2024_wider,WaterTemp_2024_wider, by = c("ComplexID","PondID"))
+WaterTemp_2024_duplicate <- merge(WaterTemp_2024_wider,WaterTemp_2024_wider, by = c("ComplexID","PondID","Year"))
 col.names <- colnames(WaterTemp_2024_duplicate)
 col.names <- col.names %>% str_replace("(\\d).x","\\1_1") %>% str_replace(".y","_2")
 col.names
 colnames(WaterTemp_2024_duplicate) <- col.names
 
 WaterTemp_2024_duplicate <- WaterTemp_2024_duplicate[,order(names(WaterTemp_2024_duplicate))] #now data is organized
-
+WaterTemp_2024_duplicate <- WaterTemp_2024_duplicate %>%
+  relocate(Year,.before = "1_1_1") %>%
+  relocate(ComplexID,.before = "1_1_1") %>%
+  relocate(PondID, .before = "1_1_1")
 
 
 save(WaterTemp_2022_wider, WaterTemp_2022_duplicate, file = "WaterData2022.RData")
