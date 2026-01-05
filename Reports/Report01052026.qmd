@@ -1,0 +1,91 @@
+---
+title: "VTADS 1st Round analysis Report"
+author: "Reed Scott"
+format: docx
+editor: visual
+---
+
+```{r init, echo=FALSE,message=FALSE}
+knitr::opts_knit$set(root.dir = "C:/Users/rcscott/VTADS/Reports")
+```
+
+Hello Brittany and Gwen!
+
+I am writing this document to provide you updates on the 1st round of analysis for VTADS. At this point I have completed at least the initial planned analysis for both Bd and Ranavirus for both years. To refresh your memory + provide an update, I have provided @tbl-hypotheses which outlines hypotheses for this project. To briefly summarize: we looked at the effects of temperature alone, $\beta$ diversity + temperature, and $\alpha$ diversity + temperature.
+
+Results of the top models are shown in @tbl-BD2022 - @tbl-RV2024 . For BD, in both years the null model was the top model, indicating no effects of temperature, $\beta$ diversity or $\alpha$ diversity. For ranavirus, in 2022 the top model was the null model but in 2024 the top model included an affect of temperature on prevalence and an affect of $\beta$ diversity and temperature on p. The second model for ranavirus in 2024, which received 36% of the model weight, included an affect of $\alpha$ diversity and temperature on prevalence and $\beta$ diversity and temperature on p.
+
+Those are my results for now! Please prepare any questions, thoughts, or concerns you may have for discussion on Thursday.
+
+-Reed
+
+| Parameter | Hypothesis: Temperature | Hypothesis: $\beta$ + Temp | Hypothesis: $\alpha$ + Temp | Null Hypothesis |
+|------------------|----------------|------------------|----------------|------------------|
+| $\psi$ | There is a large body of evidence showing an effect of temperature on Bd state dynamics | Negative: Within a metacommunity, if communities are more dissimilar than interpatch disease spread will be lower. | Negative: Higher biodiversity should lower community competence [@johnson2013]. | Neutral: Biodiversity and temperature will have no effect on occupancy. |
+| $\theta$ | There is a large body of evidence showing an effect of temperature on Bd state dynamics | Negative: With lower interpatch patch transmission there will be fewer sources of disease and thus prevalence will be lower. | Negative: If biodiversity negatively regulates host interactions then with fewer interactions prevalence should be lower. | Neutral: Biodiversity and temperature will have no effect on prevalence. |
+| $p$ | There is a large body of evidence showing an effect of temperature on Bd state dynamics | Negative: If interpatch transmission is lower, then the probability of repeated infection will be lower, and thus pathogen load should be lower. | Negative: if biodiversity negatively regulates host interactions then with fewer interactions there should be lower probability of repeated infection and pathogen load should be lower. | Neutral: Biodiversity and temperature will have no effect on pathogen load. |
+
+: Hypotheses for analysis. {#tbl-hypotheses}
+
+```{r BD 2022, echo=FALSE,message=FALSE}
+#| label: tbl-BD2022
+#| tbl-cap: BD results from 2022. Top model is the null model.
+library(gt)
+library(tidyverse)
+data <- "C:/Users/rcscott/VTADS/Data"
+setwd(data)
+BD2022_mods <- readRDS("BD2022_mods.RDS")
+
+TopMods2022 <- head(BD2022_mods$model.table)
+TopMods2022 <- TopMods2022 %>% select(!c(model,Deviance))
+TopMods2022 <- TopMods2022 %>% 
+  mutate(Theta = str_replace(Theta,"temp.+","Temp")) %>%
+  mutate(p = str_replace(p,"temp.+","Temp"))
+TopMods2022
+```
+
+```{r BD 2024,echo=FALSE,message=FALSE}
+#| label: tbl-BD2024
+#| tbl-cap: BD results from 2024. Top model is the null model.
+
+data <- "C:/Users/rcscott/VTADS/Data"
+setwd(data)
+BD2024_mods <- readRDS("BD2024_mods.RDS")
+
+TopMods2024 <- head(BD2024_mods$model.table)
+TopMods2024 <- TopMods2024 %>% select(!c(model,Deviance))
+TopMods2024 <- TopMods2024 %>% 
+  mutate(Theta = str_replace(Theta,"temp.+","Temp")) %>%
+  mutate(p = str_replace(p,"temp.+","Temp"))
+TopMods2024
+```
+
+```{r RV 2022,echo=FALSE,message=FALSE}
+#| label: tbl-RV2022
+#| tbl-cap: RV results from 2022. Top model is the null model.
+data <- "C:/Users/rcscott/VTADS/Data"
+setwd(data)
+RV2022_mods <- readRDS("RV2022_mods.RDS")
+
+TopMods2022 <- head(RV2022_mods$model.table)
+TopMods2022 <- TopMods2022 %>% select(!c(model,Deviance))
+TopMods2022 <- TopMods2022 %>% 
+  mutate(Theta = str_replace(Theta,"temp.+","Temp")) %>%
+  mutate(p = str_replace(p,"temp.+","Temp"))
+TopMods2022
+```
+
+```{r RV 2024,echo=FALSE,message=FALSE}
+#| label: tbl-RV2024
+#| tbl-cap: RV results from 2024. Top model is the null model.
+data <- "C:/Users/rcscott/VTADS/Data"
+setwd(data)
+RV2024_mods <- readRDS("RV2024_mods.RDS")
+
+TopMods2024 <- head(RV2024_mods$model.table)
+TopMods2024 <- TopMods2024 %>% select(!c(model,Deviance))
+TopMods2024 <- TopMods2024 %>% 
+  mutate(Theta = str_replace(Theta,"temp.+","Temp")) %>%
+  mutate(p = str_replace(p,"temp.+","Temp"))
+TopMods2024
+```

@@ -12,6 +12,10 @@ library(unmarked)
 
 # Load functions--------------------------------------
 
+# Constants
+Surveys <- 3
+numFrogs <- 12*Surveys
+dets <- numFrogs*2
 
 # Global Variables------------------------------------
 repo <- 'C:/Users/rcscott/VTADS'
@@ -22,8 +26,8 @@ load("occModdata_2022.RData")# read in disease data from 2022
 load("occModdata_2024.RData")# read in disease data from 2024
 load("biodiversityData.RData") # read in biodiversity data
 load("TempDataOccMod.RData") # Hobo logger data
-WaterTemp_2022_Site_lvl <- TemData2022_OccMod
-WaterTemp_2024_Site_lvl <- TemData2024_OccMod
+WaterTemp_2022_Survey_lvl <- TemData2022_OccMod
+WaterTemp_2024_Survey_lvl <- TemData2024_OccMod
 load("WaterData2022.RData") # water temp nearest frog
 WaterTemp_2022_Ind_lvl <- WaterTemp_2022_wider
 WaterTemp_2022_Ind_lvl_dup <- WaterTemp_2022_duplicate
@@ -41,371 +45,312 @@ rm(list = c("TemData2022_OccMod",
             "RV_2022_wide",
             "RV_2024_wide"))
 # Program Body------------------------------------------
-
-# First lets finish cleaning up data. Need to change NaN to NA, and make sure columns are organized
-
-TempData_Site_2022 <- WaterTemp_2022_Site_lvl 
-TempData_Site_2022$mean_temp <- ifelse(is.nan(TempData_Site_2022$mean_temp), NA, TempData_Site_2022$mean_temp)
-TempData_Site_2022$scaled_temp <- scale(TempData_Site_2022$mean_temp)
-TempData_Site_2022 <- TempData_Site_2022 %>% arrange(SiteID)
-TempData_Site_2022 <- TempData_Site_2022 %>% select(!mean_temp)
-
-TempData_Site_2024 <- WaterTemp_2024_Site_lvl 
-TempData_Site_2024$mean_temp <- ifelse(is.nan(TempData_Site_2024$mean_temp), NA, TempData_Site_2024$mean_temp)
-TempData_Site_2024$scaled_temp <- scale(TempData_Site_2024$mean_temp)
-TempData_Site_2024 <- TempData_Site_2024 %>% arrange(SiteID)
-TempData_Site_2024 <- TempData_Site_2024 %>% select(!mean_temp)
-
-# Individual + rep level temperatures will need to be normalized as well
-
-# Rep level
-Rep_lvl_list <- list(WaterTemp_2022_Ind_lvl_dup = WaterTemp_2022_Ind_lvl_dup,
-                     WaterTemp_2024_Ind_lvl_dup = WaterTemp_2024_Ind_lvl_dup)
-for (i in 1:length(Rep_lvl_list)) {
-  df <- as.data.frame(Rep_lvl_list[[i]])
-  for(j in 1:ncol(df)){
-    df[,j] <- as.numeric(df[,j])
-  }
-  df[,4:ncol(df)] <- t(scale(t(df[,4:ncol(df)])))
-  Rep_lvl_list[[i]] <- df
-}
-
-WaterTemp_2022_Ind_lvl_dup <- Rep_lvl_list[[1]]
-WaterTemp_2024_Ind_lvl_dup <- Rep_lvl_list[[2]]
-
-# Ind level
-Ind_lvl_list <- list(WaterTemp_2022_Ind_lvl = WaterTemp_2022_Ind_lvl,
-                     WaterTemp_2024_Ind_lvl = WaterTemp_2024_Ind_lvl)
-for (i in 1:length(Ind_lvl_list)) {
-  df <- as.data.frame(Ind_lvl_list[[i]])
-  for(j in 1:ncol(df)){
-    df[,j] <- as.numeric(df[,j])
-  }
-  df[,4:ncol(df)] <- t(scale(t(df[,4:ncol(df)])))
-  Ind_lvl_list[[i]] <- df
-}
-
-WaterTemp_2022_Ind_lvl <- Ind_lvl_list[[1]]
-WaterTemp_2024_Ind_lvl <- Ind_lvl_list[[2]]
 #Now lets make the lists for site level covs
 
-SiteCovs_2022 <- list(alphaData = Diversity_2022$alpha, betaData = Diversity_2022$beta, SiteTempData = TempData_Site_2022$scaled_temp)
-SiteCovs_2024 <- list(alphaData = Diversity_2024$alpha, betaData = Diversity_2024$beta, SiteTempData = TempData_Site_2024$scaled_temp)
+SiteCovs_2022 <- list(alphaData = Diversity_2022$alpha, betaData = Diversity_2022$beta)
+SiteCovs_2024 <- list(alphaData = Diversity_2024$alpha, betaData = Diversity_2024$beta)
 SiteCovs_2022 <- lapply(SiteCovs_2022, as.data.frame)
 SiteCovs_2024 <- lapply(SiteCovs_2024, as.data.frame)
 
-#Want to make a phi (aka theta) list as well
-numFrogs <- 12*3
-Sites <- 24
-HoboTemp_phi <- data.frame(matrix(data = rep(SiteCovs_2022$SiteTempData$V1, 
-                                             each = numFrogs),
-                                  nrow = nrow(SiteCovs_2022$SiteTempData),
-                                  ncol = ncol(WaterTemp_2022_Ind_lvl)-3,
-                                  byrow = T))
-phi_list_2022 <- list(alphaData = NA, 
-                      betaData = NA, 
-                      HoboTemp = HoboTemp_phi,
-                      IndTempData = WaterTemp_2022_Ind_lvl[,4:ncol(WaterTemp_2022_Ind_lvl)])
+# Need to repeat survey temp for each frog in each survey
 
-for(i in 1:length(phi_list_2022)){
-  if(i >= 3){
-    next
-  }
-  data <- rep(unlist(SiteCovs_2022[[i]][[1]]), times = numFrogs)
-  data <- data.frame(matrix(data = data, nrow = Sites, ncol = numFrogs))
-  phi_list_2022[[i]] <- data
+#2022
+#impute data
+WaterTemp_2022_Survey_lvl$temp1 <- rowMeans(WaterTemp_2022_Survey_lvl[,3:5],na.rm = T)
+WaterTemp_2022_Survey_lvl[is.na(WaterTemp_2022_Survey_lvl$temp2),4] <- mean(WaterTemp_2022_Survey_lvl[,4],na.rm = T)
+WaterTemp_2022_Survey_lvl[is.na(WaterTemp_2022_Survey_lvl$temp3),5] <- mean(WaterTemp_2022_Survey_lvl[,5],na.rm = T)
+
+WaterTemp_2022_Survey_lvl[is.nan(WaterTemp_2022_Survey_lvl$temp1),3] <- mean(WaterTemp_2022_Survey_lvl[,3],na.rm = T)
+
+# reshape to read into mark
+temp1 <- matrix(data = rep(WaterTemp_2022_Survey_lvl$temp1, each = numFrogs/Surveys),
+       nrow = nrow(WaterTemp_2022_Survey_lvl),ncol = numFrogs/Surveys,
+       byrow = T)
+
+temp2 <- matrix(data = rep(WaterTemp_2022_Survey_lvl$temp2, each = numFrogs/Surveys),
+                nrow = nrow(WaterTemp_2022_Survey_lvl),ncol = numFrogs/Surveys,
+                byrow = T)
+
+temp3 <- matrix(data = rep(WaterTemp_2022_Survey_lvl$temp3, each = numFrogs/Surveys),
+                nrow = nrow(WaterTemp_2022_Survey_lvl),ncol = numFrogs/Surveys,
+                byrow = T)
+colnames(temp1) <- 1:ncol(temp1)
+colnames(temp2) <- 1:ncol(temp2)
+colnames(temp3) <- 1:ncol(temp3)
+for (i in 1:ncol(temp1)) {
+  colnames(temp1)[[i]] <- paste("temp",i,sep = "")
+  colnames(temp2)[[i]] <- paste("temp",12+i,sep = "")
+  colnames(temp3)[[i]] <- paste("temp",24+i,sep = "")
 }
 
-HoboTemp_phi <- data.frame(matrix(data = rep(SiteCovs_2024$SiteTempData$V1, 
-                                             each = numFrogs),
-                                  nrow = nrow(SiteCovs_2024$SiteTempData),
-                                  ncol = ncol(WaterTemp_2024_Ind_lvl)-3,
-                                  byrow = T))
-phi_list_2024 <- list(alphaData = NA, 
-                      betaData = NA, 
-                      HoboTemp = HoboTemp_phi,
-                      IndTempData = WaterTemp_2024_Ind_lvl[,4:ncol(WaterTemp_2024_Ind_lvl)])
+# put all the temp data together
+temp_data_2022 <- cbind(temp1,temp2,temp3) 
 
-for(i in 1:length(phi_list_2024)){
-  if(i >= 3){
-    next
-  }
-  data <- rep(unlist(SiteCovs_2024[[i]][[1]]), times = numFrogs)
-  data <- data.frame(matrix(data = data, nrow = Sites, ncol = numFrogs))
-  phi_list_2024[[i]] <- data
+
+#2024
+#impute data
+WaterTemp_2024_Survey_lvl$temp1 <- rowMeans(WaterTemp_2024_Survey_lvl[,3:5],na.rm = T)
+WaterTemp_2024_Survey_lvl[is.na(WaterTemp_2024_Survey_lvl$temp2),4] <- mean(WaterTemp_2024_Survey_lvl[,4],na.rm = T)
+WaterTemp_2024_Survey_lvl[is.na(WaterTemp_2024_Survey_lvl$temp3),5] <- mean(WaterTemp_2024_Survey_lvl[,5],na.rm = T)
+
+WaterTemp_2024_Survey_lvl[is.nan(WaterTemp_2024_Survey_lvl$temp1),3] <- mean(WaterTemp_2024_Survey_lvl[,3],na.rm = T)
+
+# reshape to read into mark
+temp1 <- matrix(data = rep(WaterTemp_2024_Survey_lvl$temp1, each = numFrogs/Surveys),
+                nrow = nrow(WaterTemp_2024_Survey_lvl),ncol = numFrogs/Surveys,
+                byrow = T)
+
+temp2 <- matrix(data = rep(WaterTemp_2024_Survey_lvl$temp2, each = numFrogs/Surveys),
+                nrow = nrow(WaterTemp_2024_Survey_lvl),ncol = numFrogs/Surveys,
+                byrow = T)
+
+temp3 <- matrix(data = rep(WaterTemp_2024_Survey_lvl$temp3, each = numFrogs/Surveys),
+                nrow = nrow(WaterTemp_2024_Survey_lvl),ncol = numFrogs/Surveys,
+                byrow = T)
+colnames(temp1) <- 1:ncol(temp1)
+colnames(temp2) <- 1:ncol(temp2)
+colnames(temp3) <- 1:ncol(temp3)
+for (i in 1:ncol(temp1)) {
+  colnames(temp1)[[i]] <- paste("temp",i,sep = "")
+  colnames(temp2)[[i]] <- paste("temp",i+12,sep = "")
+  colnames(temp3)[[i]] <- paste("temp",i+24,sep = "")
 }
 
-# Lastly need to make obsCovs list
-
-dets <- numFrogs * 2
-HoboTemp_dets <- data.frame(matrix(data = rep(SiteCovs_2022$SiteTempData$V1, 
-                                              each = dets),
-                                   nrow = nrow(SiteCovs_2022$SiteTempData),
-                                   ncol = ncol(WaterTemp_2022_Ind_lvl_dup)-3,
-                                   byrow = T))
-obsCovsList_2022 <- list(alphaData = NA, 
-                         betaData = NA, 
-                         RepTempData = WaterTemp_2022_Ind_lvl_dup[,4:ncol(WaterTemp_2022_Ind_lvl_dup)],
-                         HoboTemp = HoboTemp_dets)
-
-for(i in 1:length(obsCovsList_2022)){
-  if(i >= 3){
-    next
-  }
-  data <- rep(unlist(SiteCovs_2022[[i]][[1]]), times = dets)
-  data <- data.frame(matrix(data = data,nrow = Sites, ncol = dets))
-  obsCovsList_2022[[i]] <- data
-}
-
-
-HoboTemp_dets <- data.frame(matrix(data = rep(SiteCovs_2024$SiteTempData$V1, 
-                                              each = dets),
-                                   nrow = nrow(SiteCovs_2024$SiteTempData),
-                                   ncol = ncol(WaterTemp_2024_Ind_lvl_dup)-3,
-                                   byrow = T))
-
-obsCovsList_2024 <- list(alphaData = NA, 
-                         betaData = NA, 
-                         RepTempData = WaterTemp_2024_Ind_lvl_dup[,4:ncol(WaterTemp_2024_Ind_lvl_dup)],
-                         HoboTemp = HoboTemp_dets)
-
-for(i in 1:length(obsCovsList_2024)){
-  if(i >= 3){
-    next
-  }
-  data <- rep(unlist(SiteCovs_2024[[i]][[1]]), times = dets)
-  data <- data.frame(matrix(data = data,nrow = Sites, ncol = dets))
-  obsCovsList_2024[[i]] <- data
-}
-
-# Note on naming models = There are 3 parameters, psi, theta, and p
-# Each parameter could be either constant, affected by alpha diversity, or effected by beta diversity
-# 3 parameters * 3 possible covariates = 27 possible models
-# Each model was named based on the parameter ~ covariate inputs.
-# For example, the null model is named NullNullNull because all there parameters are constant. the 2nd model is named
-# NullNullAlpha because it includes an effect of alpha on detection/intensity. And so on.
-
-#creating UMFs
-
-SiteCovs_2022_df <- do.call(cbind, SiteCovs_2022)
-colnames(SiteCovs_2022_df) <- c("alpha", "beta","SiteTemp")
-umf_2022 <- unmarkedMultFrame(y = BD_2022_wide[,3:ncol(BD_2022_wide)], 
-                              siteCovs = SiteCovs_2022_df, 
-                              obsCovs = obsCovsList_2022, 
-                              yearlySiteCovs = phi_list_2022, 
-                              numPrimary = numFrogs) 
-
-SiteCovs_2024_df <- do.call(cbind, SiteCovs_2024)
-colnames(SiteCovs_2024_df) <- c("alpha", "beta","SiteTemp")
-umf_2024 <- unmarkedMultFrame(y = BD_2024_wide[,5:ncol(BD_2024_wide)], 
-                              siteCovs = SiteCovs_2024_df, 
-                              obsCovs = obsCovsList_2024, 
-                              yearlySiteCovs = phi_list_2024, 
-                              numPrimary = numFrogs)
-##########
-###2022###
-##########
-# Temp only mods
-Null <- goccu(psiformula = ~1, phiformula = ~1,pformula = ~1, data = umf_2022)
-#AllHoboLoggers
-AllHobo <- goccu(psiformula = ~SiteTemp, 
-                 phiformula = ~HoboTemp,
-                 pformula = ~ HoboTemp, data = umf_2022)
-#Hobo loggers + individual data
-HoboAndInd <- goccu(psiformula = ~SiteTemp, 
-                    phiformula = ~1,
-                    pformula = ~ 1, 
-                    data = umf_2022)
-
-
-# If temp included
-# Psi ~ Temp
-NullNullNull <- goccu(psiformula = ~SiteTemp, phiformula = ~IndTemp, pformula = ~RepTemp,data = umf_2022 ) # Really a temp model
-NullNullAlpha <- goccu(psiformula = ~SiteTemp, phiformula = ~IndTemp, pformula = ~alpha + RepTemp,data = umf_2022 )
-NullNullBeta <- goccu(psiformula = ~SiteTemp, phiformula = ~IndTemp, pformula = ~beta + RepTemp,data = umf_2022 )
-NullAlphaNull <- goccu(psiformula = ~SiteTemp, phiformula = ~alpha +Ind Temp, pformula = ~RepTemp,data = umf_2022 )
-NullAlphaAlpha <- goccu(psiformula = ~SiteTemp, phiformula = ~alpha +Ind Temp, pformula = ~alpha + RepTemp,data = umf_2022 )
-NullAlphaBeta <- goccu(psiformula = ~SiteTemp, phiformula = ~alpha +Ind Temp, pformula = ~beta + RepTemp,data = umf_2022 )
-NullBetaNull <- goccu(psiformula = ~SiteTemp, phiformula = ~beta+Ind Temp, pformula = ~RepTemp,data = umf_2022 ) 
-NullBetaAlpha <- goccu(psiformula = ~SiteTemp, phiformula = ~beta + IndTemp, pformula = ~alpha + RepTemp,data = umf_2022 )
-NullBetaBeta <- goccu(psiformula = ~SiteTemp, phiformula = ~beta + IndTemp, pformula = ~beta + RepTemp,data = umf_2022 )
-#Psi ~ alpha
-AlphaNullNull <- goccu(psiformula = ~alpha + SiteTemp, phiformula = ~IndTemp, pformula = ~RepTemp,data = umf_2022 )
-AlphaNullAlpha <- goccu(psiformula = ~alpha + SiteTemp, phiformula = ~IndTemp, pformula = ~alpha + RepTemp,data = umf_2022 )
-AlphaNullBeta <- goccu(psiformula = ~alpha + SiteTemp, phiformula = ~IndTemp, pformula = ~beta + RepTemp,data = umf_2022 )
-AlphaAlphaNull <- goccu(psiformula = ~alpha + SiteTemp, phiformula = ~alpha +Ind Temp, pformula = ~RepTemp,data = umf_2022 )
-AlphaAlphaAlpha <- goccu(psiformula = ~alpha + SiteTemp, phiformula = ~alpha +Ind Temp, pformula = ~alpha + RepTemp,data = umf_2022 )
-AlphaAlphaBeta <- goccu(psiformula = ~alpha + SiteTemp, phiformula = ~alpha +Ind Temp, pformula = ~beta + RepTemp,data = umf_2022 )
-AlphaBetaNull <- goccu(psiformula = ~alpha + SiteTemp, phiformula = ~beta + IndTemp, pformula = ~RepTemp,data = umf_2022 )
-AlphaBetaAlpha <- goccu(psiformula = ~alpha + SiteTemp, phiformula = ~beta + IndTemp, pformula = ~alpha + RepTemp,data = umf_2022 )
-AlphaBetaBeta <- goccu(psiformula = ~alpha + SiteTemp, phiformula = ~beta + IndTemp, pformula = ~beta + RepTemp,data = umf_2022 )
-# Psi ~ beta
-BetaNullNull <- goccu(psiformula = ~beta + SiteTemp, phiformula = ~IndTemp, pformula = ~RepTemp,data = umf_2022 )
-BetaNullAlpha <- goccu(psiformula = ~beta + SiteTemp, phiformula = ~IndTemp, pformula = ~alpha + RepTemp,data = umf_2022 )
-BetaNullBeta <- goccu(psiformula = ~beta + SiteTemp, phiformula = ~IndTemp, pformula = ~beta + RepTemp,data = umf_2022 )
-BetaAlphaNull <- goccu(psiformula = ~beta + SiteTemp, phiformula = ~alpha +Ind Temp, pformula = ~RepTemp,data = umf_2022 )
-BetaAlphaAlpha <- goccu(psiformula = ~beta + SiteTemp, phiformula = ~alpha +Ind Temp, pformula = ~alpha + RepTemp,data = umf_2022 )
-BetaAlphaBeta <- goccu(psiformula = ~beta + SiteTemp, phiformula = ~alpha +Ind Temp, pformula = ~beta + RepTemp,data = umf_2022 )
-BetaBetaNull <- goccu(psiformula = ~beta + SiteTemp, phiformula = ~beta + IndTemp, pformula = ~RepTemp,data = umf_2022 )
-BetaBetaAlpha <- goccu(psiformula = ~beta + SiteTemp, phiformula = ~beta + IndTemp, pformula = ~alpha + RepTemp,data = umf_2022 )
-BetaBetaBeta <- goccu(psiformula = ~beta + SiteTemp, phiformula = ~beta + IndTemp, pformula = ~beta + RepTemp,data = umf_2022 )
-
-# Do model selection
-fitlist.psi <- fitList(NullNullNull,
-                       NullNullAlpha,
-                       NullNullBeta,
-                       NullAlphaNull,
-                       NullAlphaAlpha,
-                       NullAlphaBeta,
-                       NullBetaNull,
-                       NullBetaAlpha,
-                       NullBetaBeta,
-                       AlphaNullNull,
-                       AlphaNullAlpha,
-                       AlphaNullBeta,
-                       AlphaAlphaNull,
-                       AlphaAlphaAlpha,
-                       AlphaAlphaBeta,
-                       AlphaBetaNull,
-                       AlphaBetaAlpha,
-                       AlphaBetaBeta,
-                       BetaNullNull,
-                       BetaNullAlpha,
-                       BetaNullBeta,
-                       BetaAlphaNull,
-                       BetaAlphaAlpha,
-                       BetaAlphaBeta,
-                       BetaBetaNull,
-                       BetaBetaAlpha,
-                       BetaBetaBeta)
-
-modSel(fitlist.psi)
-
-
-##########
-###2024###
-##########
-
-# If temp included
-# Psi ~ Temp
-NullNullNull <- goccu(psiformula = ~SiteTemp, phiformula = ~IndTemp, pformula = ~RepTemp,data = umf_2024 ) # Really a temp model
-NullNullAlpha <- goccu(psiformula = ~SiteTemp, phiformula = ~IndTemp, pformula = ~alpha + RepTemp,data = umf_2024 )
-NullNullBeta <- goccu(psiformula = ~SiteTemp, phiformula = ~IndTemp, pformula = ~beta + RepTemp,data = umf_2024 )
-NullAlphaNull <- goccu(psiformula = ~SiteTemp, phiformula = ~alpha +IndTemp, pformula = ~RepTemp,data = umf_2024 )
-NullAlphaAlpha <- goccu(psiformula = ~SiteTemp, phiformula = ~alpha +IndTemp, pformula = ~alpha + RepTemp,data = umf_2024 )
-NullAlphaBeta <- goccu(psiformula = ~SiteTemp, phiformula = ~alpha +IndTemp, pformula = ~beta + RepTemp,data = umf_2024 )
-NullBetaNull <- goccu(psiformula = ~SiteTemp, phiformula = ~beta + IndTemp, pformula = ~RepTemp,data = umf_2024 ) 
-NullBetaAlpha <- goccu(psiformula = ~SiteTemp, phiformula = ~beta + IndTemp, pformula = ~alpha + RepTemp,data = umf_2024 )
-NullBetaBeta <- goccu(psiformula = ~SiteTemp, phiformula = ~beta + IndTemp, pformula = ~beta + RepTemp,data = umf_2024 )
-#Psi ~ alpha
-AlphaNullNull <- goccu(psiformula = ~alpha + SiteTemp, phiformula = ~IndTemp, pformula = ~RepTemp,data = umf_2024 )
-AlphaNullAlpha <- goccu(psiformula = ~alpha + SiteTemp, phiformula = ~IndTemp, pformula = ~alpha + RepTemp,data = umf_2024 )
-AlphaNullBeta <- goccu(psiformula = ~alpha + SiteTemp, phiformula = ~IndTemp, pformula = ~beta + RepTemp,data = umf_2024 )
-AlphaAlphaNull <- goccu(psiformula = ~alpha + SiteTemp, phiformula = ~alpha +IndTemp, pformula = ~RepTemp,data = umf_2024 )
-AlphaAlphaAlpha <- goccu(psiformula = ~alpha + SiteTemp, phiformula = ~alpha +IndTemp, pformula = ~alpha + RepTemp,data = umf_2024 )
-AlphaAlphaBeta <- goccu(psiformula = ~alpha + SiteTemp, phiformula = ~alpha +IndTemp, pformula = ~beta + RepTemp,data = umf_2024 )
-AlphaBetaNull <- goccu(psiformula = ~alpha + SiteTemp, phiformula = ~beta + IndTemp, pformula = ~RepTemp,data = umf_2024 )
-AlphaBetaAlpha <- goccu(psiformula = ~alpha + SiteTemp, phiformula = ~beta + IndTemp, pformula = ~alpha + RepTemp,data = umf_2024 )
-AlphaBetaBeta <- goccu(psiformula = ~alpha + SiteTemp, phiformula = ~beta + IndTemp, pformula = ~beta + RepTemp,data = umf_2024 )
-# Psi ~ beta
-BetaNullNull <- goccu(psiformula = ~beta + SiteTemp, phiformula = ~IndTemp, pformula = ~RepTemp,data = umf_2024 )
-BetaNullAlpha <- goccu(psiformula = ~beta + SiteTemp, phiformula = ~IndTemp, pformula = ~alpha + RepTemp,data = umf_2024 )
-BetaNullBeta <- goccu(psiformula = ~beta + SiteTemp, phiformula = ~IndTemp, pformula = ~beta + RepTemp,data = umf_2024 )
-BetaAlphaNull <- goccu(psiformula = ~beta + SiteTemp, phiformula = ~alpha +Ind Temp, pformula = ~RepTemp,data = umf_2024 )
-BetaAlphaAlpha <- goccu(psiformula = ~beta + SiteTemp, phiformula = ~alpha +Ind Temp, pformula = ~alpha + RepTemp,data = umf_2024 )
-BetaAlphaBeta <- goccu(psiformula = ~beta + SiteTemp, phiformula = ~alpha +Ind Temp, pformula = ~beta + RepTemp,data = umf_2024 )
-BetaBetaNull <- goccu(psiformula = ~beta + SiteTemp, phiformula = ~beta + IndTemp, pformula = ~RepTemp,data = umf_2024 )
-BetaBetaAlpha <- goccu(psiformula = ~beta + SiteTemp, phiformula = ~beta + IndTemp, pformula = ~alpha + RepTemp,data = umf_2024 )
-BetaBetaBeta <- goccu(psiformula = ~beta + SiteTemp, phiformula = ~beta + IndTemp, pformula = ~beta + RepTemp,data = umf_2024 )
-
-# Do model selection
-fitlist.BD <- fitList(NullNullNull,
-                       NullNullAlpha,
-                       NullNullBeta,
-                       NullAlphaNull,
-                       NullAlphaAlpha,
-                       NullAlphaBeta,
-                       NullBetaNull,
-                       NullBetaAlpha,
-                       NullBetaBeta,
-                       AlphaNullNull,
-                       AlphaNullAlpha,
-                       AlphaNullBeta,
-                       AlphaAlphaNull,
-                       AlphaAlphaAlpha,
-                       AlphaAlphaBeta,
-                       AlphaBetaNull,
-                       AlphaBetaAlpha,
-                       AlphaBetaBeta,
-                       BetaNullNull,
-                       BetaNullAlpha,
-                       BetaNullBeta,
-                       BetaAlphaNull,
-                       BetaAlphaAlpha,
-                       BetaAlphaBeta,
-                       BetaBetaNull,
-                       BetaBetaAlpha,
-                       BetaBetaBeta)
-
-modSel(fitlist.BD)
-
-setwd(data)
-saveRDS(fitList.BD, file = "BD_mods")
-
-# # If only want to explore Alpha*NumPonds, with temperature
-# NullNullNull <- goccu(psiformula = ~SiteTemp, phiformula = ~IndTemp, pformula = ~RepTemp,data = ) # Really a temp model
+# put all the temp data together
+temp_data_2024 <- cbind(temp1,temp2,temp3) 
+# # First lets finish cleaning up data. Need to change NaN to NA, and make sure columns are organized
 # 
-# # Effects of alpha + temp ONLY
-# AlphaNullNull <- goccu(psiformula = ~ alpha + Temp, phiformula = ~IndTemp, pformula = ~RepTemp,data = )
-# NullAlphaNull <- goccu(psiformula = ~ Temp, phiformula = ~alpha +Ind Temp, pformula = ~RepTemp,data = )
-# NullNullAlpha <- goccu(psiformula = ~ Temp, phiformula = ~IndTemp, pformula = ~alpha + RepTemp,data = )
-# AlphaAlphaNull <- goccu(psiformula = ~ alpha + Temp, phiformula = ~alpha +Ind Temp, pformula = ~RepTemp,data = )
-# NullAlphaAlpha <- goccu(psiformula = ~ Temp, phiformula = ~alpha +Ind Temp, pformula = ~alpha + RepTemp,data = )
-# AlphaNullAlpha <- goccu(psiformula = ~ alpha + Temp, phiformula = ~IndTemp, pformula = ~alpha + RepTemp,data = )
-# AlphaAlphaAlpha <- goccu(psiformula = ~ alpha + Temp, phiformula = ~alpha +Ind Temp, pformula = ~alpha + RepTemp,data = )
+# TempData_Site_2022 <- WaterTemp_2022_Site_lvl 
+# TempData_Site_2022$mean_temp <- ifelse(is.nan(TempData_Site_2022$mean_temp), NA, TempData_Site_2022$mean_temp)
+# TempData_Site_2022$scaled_temp <- scale(TempData_Site_2022$mean_temp)
+# TempData_Site_2022 <- TempData_Site_2022 %>% arrange(SiteID)
+# TempData_Site_2022 <- TempData_Site_2022 %>% select(!mean_temp)
 # 
-# # Effects of alpha + NumPonds + Temp
-# AlphaPondsNullNull <- goccu(psiformula = ~ alpha + Ponds + Temp, phiformula = ~IndTemp, pformula = ~RepTemp,data = )
+# TempData_Site_2024 <- WaterTemp_2024_Site_lvl 
+# TempData_Site_2024$mean_temp <- ifelse(is.nan(TempData_Site_2024$mean_temp), NA, TempData_Site_2024$mean_temp)
+# TempData_Site_2024$scaled_temp <- scale(TempData_Site_2024$mean_temp)
+# TempData_Site_2024 <- TempData_Site_2024 %>% arrange(SiteID)
+# TempData_Site_2024 <- TempData_Site_2024 %>% select(!mean_temp)
 # 
-
-
+# # Individual + rep level temperatures will need to be normalized as well
+# 
+# # Rep level
+# Rep_lvl_list <- list(WaterTemp_2022_Ind_lvl_dup = WaterTemp_2022_Ind_lvl_dup,
+#                      WaterTemp_2024_Ind_lvl_dup = WaterTemp_2024_Ind_lvl_dup)
+# for (i in 1:length(Rep_lvl_list)) {
+#   df <- as.data.frame(Rep_lvl_list[[i]])
+#   for(j in 1:ncol(df)){
+#     df[,j] <- as.numeric(df[,j])
+#   }
+#   df[,4:ncol(df)] <- t(scale(t(df[,4:ncol(df)])))
+#   Rep_lvl_list[[i]] <- df
+# }
+# 
+# WaterTemp_2022_Ind_lvl_dup <- Rep_lvl_list[[1]]
+# WaterTemp_2024_Ind_lvl_dup <- Rep_lvl_list[[2]]
+# 
+# # Ind level
+# Ind_lvl_list <- list(WaterTemp_2022_Ind_lvl = WaterTemp_2022_Ind_lvl,
+#                      WaterTemp_2024_Ind_lvl = WaterTemp_2024_Ind_lvl)
+# for (i in 1:length(Ind_lvl_list)) {
+#   df <- as.data.frame(Ind_lvl_list[[i]])
+#   for(j in 1:ncol(df)){
+#     df[,j] <- as.numeric(df[,j])
+#   }
+#   df[,4:ncol(df)] <- t(scale(t(df[,4:ncol(df)])))
+#   Ind_lvl_list[[i]] <- df
+# }
+# 
+# WaterTemp_2022_Ind_lvl <- Ind_lvl_list[[1]]
+# WaterTemp_2024_Ind_lvl <- Ind_lvl_list[[2]]
+# 
+# 
+# # #Want to make a phi (aka theta) list as well
+# numFrogs <- 12*3
+# # Sites <- 24
+# # HoboTemp_phi <- data.frame(matrix(data = rep(SiteCovs_2022$SiteTempData$V1, 
+# #                                              each = numFrogs),
+# #                                   nrow = nrow(SiteCovs_2022$SiteTempData),
+# #                                   ncol = ncol(WaterTemp_2022_Ind_lvl)-3,
+# #                                   byrow = T))
+# # phi_list_2022 <- list(alphaData = NA, 
+# #                       betaData = NA, 
+# #                       HoboTemp = HoboTemp_phi,
+# #                       IndTempData = WaterTemp_2022_Ind_lvl[,4:ncol(WaterTemp_2022_Ind_lvl)])
+# # 
+# # for(i in 1:length(phi_list_2022)){
+# #   if(i >= 3){
+# #     next
+# #   }
+# #   data <- rep(unlist(SiteCovs_2022[[i]][[1]]), times = numFrogs)
+# #   data <- data.frame(matrix(data = data, nrow = Sites, ncol = numFrogs))
+# #   phi_list_2022[[i]] <- data
+# # }
+# # 
+# # HoboTemp_phi <- data.frame(matrix(data = rep(SiteCovs_2024$SiteTempData$V1, 
+# #                                              each = numFrogs),
+# #                                   nrow = nrow(SiteCovs_2024$SiteTempData),
+# #                                   ncol = ncol(WaterTemp_2024_Ind_lvl)-3,
+# #                                   byrow = T))
+# # phi_list_2024 <- list(alphaData = NA, 
+# #                       betaData = NA, 
+# #                       HoboTemp = HoboTemp_phi,
+# #                       IndTempData = WaterTemp_2024_Ind_lvl[,4:ncol(WaterTemp_2024_Ind_lvl)])
+# # 
+# # for(i in 1:length(phi_list_2024)){
+# #   if(i >= 3){
+# #     next
+# #   }
+# #   data <- rep(unlist(SiteCovs_2024[[i]][[1]]), times = numFrogs)
+# #   data <- data.frame(matrix(data = data, nrow = Sites, ncol = numFrogs))
+# #   phi_list_2024[[i]] <- data
+# # }
+# # 
+# # # Lastly need to make obsCovs list
+# # 
+# dets <- numFrogs * 2
+# # HoboTemp_dets <- data.frame(matrix(data = rep(SiteCovs_2022$SiteTempData$V1, 
+# #                                               each = dets),
+# #                                    nrow = nrow(SiteCovs_2022$SiteTempData),
+# #                                    ncol = ncol(WaterTemp_2022_Ind_lvl_dup)-3,
+# #                                    byrow = T))
+# # obsCovsList_2022 <- list(alphaData = NA, 
+# #                          betaData = NA, 
+# #                          RepTempData = WaterTemp_2022_Ind_lvl_dup[,4:ncol(WaterTemp_2022_Ind_lvl_dup)],
+# #                          HoboTemp = HoboTemp_dets)
+# # 
+# # for(i in 1:length(obsCovsList_2022)){
+# #   if(i >= 3){
+# #     next
+# #   }
+# #   data <- rep(unlist(SiteCovs_2022[[i]][[1]]), times = dets)
+# #   data <- data.frame(matrix(data = data,nrow = Sites, ncol = dets))
+# #   obsCovsList_2022[[i]] <- data
+# # }
+# # 
+# # 
+# # HoboTemp_dets <- data.frame(matrix(data = rep(SiteCovs_2024$SiteTempData$V1, 
+# #                                               each = dets),
+# #                                    nrow = nrow(SiteCovs_2024$SiteTempData),
+# #                                    ncol = ncol(WaterTemp_2024_Ind_lvl_dup)-3,
+# #                                    byrow = T))
+# # 
+# # obsCovsList_2024 <- list(alphaData = NA, 
+# #                          betaData = NA, 
+# #                          RepTempData = WaterTemp_2024_Ind_lvl_dup[,4:ncol(WaterTemp_2024_Ind_lvl_dup)],
+# #                          HoboTemp = HoboTemp_dets)
+# # 
+# # for(i in 1:length(obsCovsList_2024)){
+# #   if(i >= 3){
+# #     next
+# #   }
+# #   data <- rep(unlist(SiteCovs_2024[[i]][[1]]), times = dets)
+# #   data <- data.frame(matrix(data = data,nrow = Sites, ncol = dets))
+# #   obsCovsList_2024[[i]] <- data
+# # }
+# 
+# # Note on naming models = There are 3 parameters, psi, theta, and p
+# # Each parameter could be either constant, affected by alpha diversity, or effected by beta diversity
+# # 3 parameters * 3 possible covariates = 27 possible models
+# # Each model was named based on the parameter ~ covariate inputs.
+# # For example, the null model is named NullNullNull because all there parameters are constant. the 2nd model is named
+# # NullNullAlpha because it includes an effect of alpha on detection/intensity. And so on.
+# 
+# 
+# 
+# 
+# 
+# 
 
 # I might have to use Mark.... 
 # unmarked can't handle this many detections for goccu
 library(RMark)
 
+### 2022
+
 # will need to make one dataframe.
 SiteCovs_2022_df <- do.call(cbind, SiteCovs_2022)
-colnames(SiteCovs_2022_df) <- c("alpha","beta","Temp")
+colnames(SiteCovs_2022_df) <- c("alpha","beta")
 SiteCovs_2024_df <- do.call(cbind, SiteCovs_2024)
-colnames(SiteCovs_2024_df) <- c("alpha","beta","Temp")
+colnames(SiteCovs_2024_df) <- c("alpha","beta")
+
 BD_2022_wide[is.na(BD_2022_wide)] <- '.' # Change NA to .
 ch_2022 <- BD_2022_wide %>% unite('ch', 3:ncol(BD_2022_wide),sep = "")
 
-BD_2022_Mark <- cbind(SiteCovs_2022_df,ch_2022)
-BD_2022_Mark[,3][is.na(BD_2022_Mark[,3])] <- mean(BD_2022_Mark[,3], na.rm = T)
+BD_2022_Mark <- cbind(SiteCovs_2022_df,ch_2022,temp_data_2022)
 
+# Add survey data
+nsurveys <- 3
+Yes <- rep(1,numFrogs*nrow(BD_2022_Mark)/nsurveys)
+No <- rep(0,numFrogs*nrow(BD_2022_Mark)/nsurveys)
+Survey1 <- matrix(data = c(Yes,No,No), nrow = nrow(BD_2022_Mark), 
+                  ncol =  dets)
+colnames(Survey1) <- 1:dets
+Survey2 <- matrix(data = c(No,Yes,No), nrow = nrow(BD_2022_Mark), 
+                  ncol =  dets)
+colnames(Survey2) <- 1:dets
+Survey3 <- matrix(data = c(No,No,Yes), nrow = nrow(BD_2022_Mark), 
+                  ncol =  dets)
+colnames(Survey3) <- 1:dets
+
+columns <- 1:ncol(Survey1)
+for(i in 1:length(columns)){
+  colnames(Survey1)[[i]] <- paste("pSurvey1",columns[[i]],sep="_")
+  colnames(Survey2)[[i]] <- paste("pSurvey2",columns[[i]],sep="_")
+  colnames(Survey3)[[i]] <- paste("pSurvey3",columns[[i]],sep="_")
+}
+
+BD_2022_Mark <- cbind(BD_2022_Mark,Survey1,Survey2,Survey3)
+BD_2022_Mark$ComplexID <- as.factor(BD_2022_Mark$ComplexID)
 #create processed data
 BD2022.pr <- process.data(BD_2022_Mark,
                       model = 'MultScalOcc',
-                      mixtures = 3)
+                      mixtures = 2,
+                      groups = "ComplexID")
 
 BD2022.ddl<- make.design.data(BD2022.pr)
+save(BD2022.ddl, BD2022.pr, file = "BD2022MarkData.RData")
+
+# After an intial run, betas are really high for theta ~ complex7 and p ~ complex 2
+# So I'm going to fix them at 1
+# BD2022.ddl$Theta$fix <- NA
+# BD2022.ddl$Theta$fix <- ifelse(BD2022.ddl$Theta$ComplexID == "4" |
+#                                  BD2022.ddl$Theta$ComplexID == "5"| 
+#                                  BD2022.ddl$Theta$ComplexID == "7",1,NA)
+# BD2022.ddl$p$fix <- ifelse(BD2022.ddl$p$ComplexID == "2" |
+#                              BD2022.ddl$p$ComplexID == "4"|
+#                              BD2022.ddl$p$ComplexID == "5" ,1,NA)
 
 # Create param models
-TempOnly <-  list(formula=~Temp)
-AlphaTemp <-  list(formula =~ alpha + Temp)
-BetaTemp <- list (formula =~ beta + Temp)
+# For psi
+
+AlphaPsi <- list(formula =~ alpha)
+BetaPsi <- list (formula =~ beta)
+
+# For Theta
+TempTheta <-  list(formula=~temp + pSurvey1_ + pSurvey2_ + pSurvey3_)
+AlphaTempTheta <-  list(formula =~ alpha + temp + pSurvey1_ + pSurvey2_ + pSurvey3_)
+BetaTempTheta <- list (formula =~ beta + temp + pSurvey1_ + pSurvey2_ + pSurvey3_)
+
+# For p
+TempP <-  list(formula=~temp + pSurvey1_ + pSurvey2_ + pSurvey3_)
+AlphaTempP <-  list(formula =~ alpha + temp + pSurvey1_ + pSurvey2_ + pSurvey3_)
+BetaTempP <- list (formula =~ beta + temp + pSurvey1_ + pSurvey2_ + pSurvey3_)
 
 # If temp included
 # Psi ~ Temp
-
+Null <- list(formula =~ 1)
+TrueNull <- mark(data = BD2022.pr,
+                 ddl = BD2022.ddl,
+                 model.parameters = list(Psi = Null,
+                                         Theta = Null,
+                                         p = Null))
 # Creating a function to make my life easier for creating models
 BD_mark_func <- function(data = BD2022.pr, 
                          ddl = BD2022.ddl,
-                         Psi = TempOnly,
-                         Theta = TempOnly,
-                         p = TempOnly){
+                         Psi = Null,
+                         Theta = TempTheta,
+                         p = TempP){
   mark(data = data, 
        ddl = ddl,
        model.parameters = list(Psi = Psi,
@@ -413,98 +358,276 @@ BD_mark_func <- function(data = BD2022.pr,
                                p = p))
 }
 
-Null <- list(formula =~ 1)
-TrueNull <- mark(data = BD2022.pr,
-                 ddl = BD2022.ddl,
-                 model.parameters = list(Psi = Null,
-                                         Theta = Null,
-                                         p = Null))
+
 # Null model, but really a temp model
 NullNullNull <- BD_mark_func()
 
 ### Psi is null
 # alpha only on p
-NullNullAlpha <- BD_mark_func(p = AlphaTemp)
+NullNullAlpha <- BD_mark_func(p = AlphaTempP)
 # beta only on p
-NullNullBeta <- BD_mark_func(p = BetaTemp)
+NullNullBeta <- BD_mark_func(p = BetaTempP)
 # alpha only on theta
-NullAlphaNull <- BD_mark_func(Theta = AlphaTemp)
+NullAlphaNull <- BD_mark_func(Theta = AlphaTempTheta)
 # alpha on theta and p
-NullAlphaAlpha <- BD_mark_func(Theta = AlphaTemp,
-                               p = AlphaTemp)
+NullAlphaAlpha <- BD_mark_func(Theta = AlphaTempTheta,
+                               p = AlphaTempP)
 # Alpha on theta, beta on p
-NullAlphaBeta <- BD_mark_func(Theta = AlphaTemp,
-                              p = BetaTemp)
+NullAlphaBeta <- BD_mark_func(Theta = AlphaTempTheta,
+                              p = BetaTempP)
 # Beta on theta only
-NullBetaNull <- BD_mark_func(Theta = BetaTemp)
+NullBetaNull <- BD_mark_func(Theta = BetaTempTheta)
 # Beta on theta, alpha on p
-NullBetaAlpha <- BD_mark_func(Theta = BetaTemp,
-                              p = AlphaTemp)
+NullBetaAlpha <- BD_mark_func(Theta = BetaTempTheta,
+                              p = AlphaTempP)
 # Beta on theta and p
-NullBetaBeta <- BD_mark_func(Theta = BetaTemp,
-                             p = BetaTemp)
+NullBetaBeta <- BD_mark_func(Theta = BetaTempTheta,
+                             p = BetaTempP)
 ### Psi ~ alpha
 # Alpha on psi only
-AlphaNullNull <- BD_mark_func(Psi = AlphaTemp)
+AlphaNullNull <- BD_mark_func(Psi = AlphaPsi)
 # alpha on p
-AlphaNullAlpha <- BD_mark_func(Psi = AlphaTemp,
-                               p = AlphaTemp)
+AlphaNullAlpha <- BD_mark_func(Psi = AlphaPsi,
+                               p = AlphaTempP)
 # beta on p
-AlphaNullBeta <- BD_mark_func(Psi = AlphaTemp,
-                              p = BetaTemp)
+AlphaNullBeta <- BD_mark_func(Psi = AlphaPsi,
+                              p = BetaTempP)
 # Alpha on Theta
-AlphaAlphaNull <- BD_mark_func(Psi = AlphaTemp,
-                               Theta = AlphaTemp)
+AlphaAlphaNull <- BD_mark_func(Psi = AlphaPsi,
+                               Theta = AlphaTempTheta)
 # Alpha on all 3
-AlphaAlphaAlpha <- BD_mark_func(Psi = AlphaTemp,
-                                Theta = AlphaTemp,
-                                p = AlphaTemp)
+AlphaAlphaAlpha <- BD_mark_func(Psi = AlphaPsi,
+                                Theta = AlphaTempTheta,
+                                p = AlphaTempP)
 # Alph on theta, beta on p
-AlphaAlphaBeta <- BD_mark_func(Psi = AlphaTemp,
-                               Theta = AlphaTemp,
-                               p = BetaTemp)
+AlphaAlphaBeta <- BD_mark_func(Psi = AlphaPsi,
+                               Theta = AlphaTempTheta,
+                               p = BetaTempP)
 # Beta on theta,
-AlphaBetaNull <- BD_mark_func(Psi = AlphaTemp,
-                              Theta = BetaTemp)
+AlphaBetaNull <- BD_mark_func(Psi = AlphaPsi,
+                              Theta = BetaTempTheta)
 # beta on theta, alpha on p
-AlphaBetaAlpha <- BD_mark_func(Psi = AlphaTemp,
-                               Theta = BetaTemp,
-                               p = AlphaTemp)
+AlphaBetaAlpha <- BD_mark_func(Psi = AlphaPsi,
+                               Theta = BetaTempTheta,
+                               p = AlphaTempP)
 # Beta on theta and p
-AlphaBetaBeta <- BD_mark_func(Psi = AlphaTemp,
-                              Theta = BetaTemp,
-                              p = BetaTemp)
+AlphaBetaBeta <- BD_mark_func(Psi = AlphaPsi,
+                              Theta = BetaTempTheta,
+                              p = BetaTempP)
 
 ### Psi ~ beta
 # Beta only on Psi
-BetaNullNull <- BD_mark_func(Psi = BetaTemp)
+BetaNullNull <- BD_mark_func(Psi = BetaPsi)
 # Alpa on p
-BetaNullAlpha <- BD_mark_func(Psi = BetaTemp,
-                              p = AlphaTemp)
+BetaNullAlpha <- BD_mark_func(Psi = BetaPsi,
+                              p = AlphaTempP)
 # Beta on psi an p
-BetaNullBeta <- BD_mark_func(Psi = BetaTemp,
-                             p = BetaTemp)
+BetaNullBeta <- BD_mark_func(Psi = BetaPsi,
+                             p = BetaTempP)
 # Alpha on theta
-BetaAlphaNull <- BD_mark_func(Psi = BetaTemp,
-                              Theta = AlphaTemp)
+BetaAlphaNull <- BD_mark_func(Psi = BetaPsi,
+                              Theta = AlphaTempTheta)
 # Alpha on Theta and p
-BetaAlphaAlpha <- BD_mark_func(Psi = BetaTemp,
-                               Theta = AlphaTemp,
-                               p = AlphaTemp)
+BetaAlphaAlpha <- BD_mark_func(Psi = BetaPsi,
+                               Theta = AlphaTempTheta,
+                               p = AlphaTempP)
 # Alpha on theta, beta on p
-BetaAlphaBeta <- BD_mark_func(Psi = BetaTemp,
-                              Theta = AlphaTemp,
-                              p = BetaTemp)
+BetaAlphaBeta <- BD_mark_func(Psi = BetaPsi,
+                              Theta = AlphaTempTheta,
+                              p = BetaTempP)
 # Beta on theta
-BetaBetaNull <- BD_mark_func(Psi = BetaTemp,
-                             Theta = BetaTemp)
+BetaBetaNull <- BD_mark_func(Psi = BetaPsi,
+                             Theta = BetaTempTheta)
 # Beta on theta, alpha on p
-BetaBetaAlpha <- BD_mark_func(Psi = BetaTemp,
-                              Theta = BetaTemp,
-                              p = AlphaTemp)
+BetaBetaAlpha <- BD_mark_func(Psi = BetaPsi,
+                              Theta = BetaTempTheta,
+                              p = AlphaTempP)
 # Beta on all three
-BetaBetaBeta <- BD_mark_func(Psi = BetaTemp,
-                             Theta = BetaTemp,
-                             p = BetaTemp)
-collect.models()
+BetaBetaBeta <- BD_mark_func(Psi = BetaPsi,
+                             Theta = BetaTempTheta,
+                             p = BetaTempP)
+BD2022_mods <-  collect.models()
+View(BD2022_mods$model.table)
 
+setwd(data)
+saveRDS(BD2022_mods,file = "BD2022_mods.RDS")
+
+### 2024
+
+# remove 2022 models
+rm(list = names(BD2022_mods))
+
+# will need to make one dataframe.
+SiteCovs_2024_df <- do.call(cbind, SiteCovs_2024)
+colnames(SiteCovs_2024_df) <- c("alpha","beta")
+BD_2024_wide <- BD_2024_wide %>% select(!c(Year,SiteID))
+cols_to_convert <- colnames(BD_2024_wide)[3:ncol(BD_2024_wide)]
+BD_2024_wide <- BD_2024_wide %>%
+  mutate(across(all_of(cols_to_convert), as.character))
+BD_2024_wide[is.na(BD_2024_wide)] <- '.' # Change NA to .
+ch_2024 <- BD_2024_wide %>% unite('ch', 3:ncol(BD_2024_wide),sep = "")
+
+BD_2024_Mark <- cbind(SiteCovs_2024_df,temp_data_2024,ch_2024)
+
+### Add survey number
+# Add survey data
+nsurveys <- 3
+Yes <- rep(1,numFrogs*nrow(BD_2024_Mark)/nsurveys)
+No <- rep(0,numFrogs*nrow(BD_2024_Mark)/nsurveys)
+Survey1 <- matrix(data = c(Yes,No,No), nrow = nrow(BD_2024_Mark), 
+                  ncol =  dets)
+colnames(Survey1) <- 1:dets
+Survey2 <- matrix(data = c(No,Yes,No), nrow = nrow(BD_2024_Mark), 
+                  ncol =  dets)
+colnames(Survey2) <- 1:dets
+Survey3 <- matrix(data = c(No,No,Yes), nrow = nrow(BD_2024_Mark), 
+                  ncol =  dets)
+colnames(Survey3) <- 1:dets
+
+columns <- 1:ncol(Survey1)
+for(i in 1:length(columns)){
+  colnames(Survey1)[[i]] <- paste("pSurvey1",columns[[i]],sep="_")
+  colnames(Survey2)[[i]] <- paste("pSurvey2",columns[[i]],sep="_")
+  colnames(Survey3)[[i]] <- paste("pSurvey3",columns[[i]],sep="_")
+}
+
+BD_2024_Mark <- cbind(BD_2024_Mark,Survey1,Survey2,Survey3)
+
+#create processed data
+BD2024.pr <- process.data(BD_2024_Mark,
+                          model = 'MultScalOcc',
+                          mixtures = 2)
+
+BD2024.ddl<- make.design.data(BD2024.pr)
+
+# Create param models
+# For psi
+AlphaPsi <- list(formula =~ alpha)
+BetaPsi <- list (formula =~ beta)
+
+# For Theta
+TempTheta <-  list(formula=~ temp + pSurvey1_ + pSurvey2_ + pSurvey3_)
+AlphaTempTheta <-  list(formula =~ alpha + temp + pSurvey1_ + pSurvey2_ + pSurvey3_)
+BetaTempTheta <- list (formula =~ beta + temp + pSurvey1_ + pSurvey2_ + pSurvey3_)
+
+# For p
+TempP <-  list(formula=~temp + pSurvey1_ + pSurvey2_ + pSurvey3_)
+AlphaTempP <-  list(formula =~ alpha + temp + pSurvey1_ + pSurvey2_ + pSurvey3_)
+BetaTempP <- list (formula =~ beta + temp + pSurvey1_ + pSurvey2_ + pSurvey3_)
+
+
+# If temp included
+# Psi ~ Temp
+
+# Creating a function to make my life easier for creating models
+Null <- list(formula =~ 1)
+TrueNull <- mark(data = BD2024.pr,
+                 ddl = BD2024.ddl,
+                 model.parameters = list(Psi = Null,
+                                         Theta = Null,
+                                         p = Null))
+BD_mark_func <- function(data = BD2024.pr, 
+                         ddl = BD2024.ddl,
+                         Psi = Null,
+                         Theta = TempTheta,
+                         p = TempP){
+  mark(data = data, 
+       ddl = ddl,
+       model.parameters = list(Psi = Psi,
+                               Theta = Theta,
+                               p = p))
+}
+
+
+# Null model, but really a temp model
+NullNullNull <- BD_mark_func()
+
+### Psi is null
+# alpha only on p
+NullNullAlpha <- BD_mark_func(p = AlphaTempP)
+# beta only on p
+NullNullBeta <- BD_mark_func(p = BetaTempP)
+# alpha only on theta
+NullAlphaNull <- BD_mark_func(Theta = AlphaTempTheta)
+# alpha on theta and p
+NullAlphaAlpha <- BD_mark_func(Theta = AlphaTempTheta,
+                               p = AlphaTempP)
+# Alpha on theta, beta on p
+NullAlphaBeta <- BD_mark_func(Theta = AlphaTempTheta,
+                              p = BetaTempP)
+# Beta on theta only
+NullBetaNull <- BD_mark_func(Theta = BetaTempTheta)
+# Beta on theta, alpha on p
+NullBetaAlpha <- BD_mark_func(Theta = BetaTempTheta,
+                              p = AlphaTempP)
+# Beta on theta and p
+NullBetaBeta <- BD_mark_func(Theta = BetaTempTheta,
+                             p = BetaTempP)
+### Psi ~ alpha
+# Alpha on psi only
+AlphaNullNull <- BD_mark_func(Psi = AlphaPsi)
+# alpha on p
+AlphaNullAlpha <- BD_mark_func(Psi = AlphaPsi,
+                               p = AlphaTempP)
+# beta on p
+AlphaNullBeta <- BD_mark_func(Psi = AlphaPsi,
+                              p = BetaTempP)
+# Alpha on Theta
+AlphaAlphaNull <- BD_mark_func(Psi = AlphaPsi,
+                               Theta = AlphaTempTheta)
+# Alpha on all 3
+AlphaAlphaAlpha <- BD_mark_func(Psi = AlphaPsi,
+                                Theta = AlphaTempTheta,
+                                p = AlphaTempP)
+# Alph on theta, beta on p
+AlphaAlphaBeta <- BD_mark_func(Psi = AlphaPsi,
+                               Theta = AlphaTempTheta,
+                               p = BetaTempP)
+# Beta on theta,
+AlphaBetaNull <- BD_mark_func(Psi = AlphaPsi,
+                              Theta = BetaTempTheta)
+# beta on theta, alpha on p
+AlphaBetaAlpha <- BD_mark_func(Psi = AlphaPsi,
+                               Theta = BetaTempTheta,
+                               p = AlphaTempP)
+# Beta on theta and p
+AlphaBetaBeta <- BD_mark_func(Psi = AlphaPsi,
+                              Theta = BetaTempTheta,
+                              p = BetaTempP)
+
+### Psi ~ beta
+# Beta only on Psi
+BetaNullNull <- BD_mark_func(Psi = BetaPsi)
+# Alpa on p
+BetaNullAlpha <- BD_mark_func(Psi = BetaPsi,
+                              p = AlphaTempP)
+# Beta on psi an p
+BetaNullBeta <- BD_mark_func(Psi = BetaPsi,
+                             p = BetaTempP)
+# Alpha on theta
+BetaAlphaNull <- BD_mark_func(Psi = BetaPsi,
+                              Theta = AlphaTempTheta)
+# Alpha on Theta and p
+BetaAlphaAlpha <- BD_mark_func(Psi = BetaPsi,
+                               Theta = AlphaTempTheta,
+                               p = AlphaTempP)
+# Alpha on theta, beta on p
+BetaAlphaBeta <- BD_mark_func(Psi = BetaPsi,
+                              Theta = AlphaTempTheta,
+                              p = BetaTempP)
+# Beta on theta
+BetaBetaNull <- BD_mark_func(Psi = BetaPsi,
+                             Theta = BetaTempTheta)
+# Beta on theta, alpha on p
+BetaBetaAlpha <- BD_mark_func(Psi = BetaPsi,
+                              Theta = BetaTempTheta,
+                              p = AlphaTempP)
+# Beta on all three
+BetaBetaBeta <- BD_mark_func(Psi = BetaPsi,
+                             Theta = BetaTempTheta,
+                             p = BetaTempP)
+BD2024_mods <-  collect.models()
+View(BD2024_mods$model.table)
+
+setwd(data)
+saveRDS(BD2024_mods,file = "BD2024_mods.RDS")

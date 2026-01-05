@@ -522,6 +522,9 @@ RV_2022_wide <- RV_2022_longer %>%
               values_from = PA,
               names_sort = T)
 
+StAlbansS <- c(5,2,rep(NA,ncol(RV_2022_wide)-2))
+RV_2022_wide <- rbind(RV_2022_wide, StAlbansS)
+RV_2022_wide <- arrange(RV_2022_wide,as.numeric(ComplexID),as.numeric(PondID))
 
 
 ##########

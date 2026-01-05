@@ -23,7 +23,7 @@ Sites <- list.files()[1:23]
 Temperature_list <- vector("list", length = length(Sites))
 names(Temperature_list) <- Sites
 names(Temperature_list)
-SiteID <- c("02-01",
+Site <- c("02-01",
             "01-01",
             "10-01",
             "10-02",
@@ -50,14 +50,14 @@ SiteID <- c("02-01",
 setwd(paste(TempData, Sites[[7]], sep = "/"))
 temp = list.files(pattern="\\.csv$")
 temp_list <- vector("list", length = length(temp))
-df <- fread(temp[[1]])
-df <- df[,2:3]
-df <- as.data.frame(df)
-df$Date <- str_extract(df[,1], "\\d+/\\d+/\\d+")
-df <- df[,-1]
-df$Date <- mdy(df$Date)
-df <- df[!(df$Temp == "" | is.na(df$Temp)), ]
-names(df) <- c("Temp","Date")
+# df <- fread(temp[[1]])
+# df <- df[,2:3]
+# df <- as.data.frame(df)
+# df$Date <- str_extract(df[,1], "\\d+/\\d+/\\d+")
+# df <- df[,-1]
+# df$Date <- mdy(df$Date)
+# df <- df[!(df$Temp == "" | is.na(df$Temp)), ]
+# names(df) <- c("Temp","Date")
 
 for(i in 1:length(Sites)){
   setwd(paste(TempData, Sites[[i]], sep = "/"))
@@ -131,25 +131,41 @@ for(i in 1:length(Temperature_list)){
   Site_df <- Temperature_list[[i]][[1]]
   Site_df$Temp <- as.numeric(Site_df$Temp)
   Site_df$Year <- year(Site_df$Date)
-  site_name <- SiteID[[i]]
+  site_name <- Site[[i]]
   site_ls <- vector("list", length = length(Year_array))
-  df <- data.frame(matrix(nrow = 1, ncol = 3))
-  colnames(df) <- c("SiteID", "Year","mean_temp")
+  df <- data.frame(matrix(nrow = 1, ncol = 5))
+  colnames(df) <- c("SiteID", "Year","temp1","temp2","temp3")
     for (j in 1:length(Year_array)) {
-      data <- Site_df %>% filter(Year == Year_array[[j]])
-      AvgTemp <- mean(data$Temp, na.rm = T)
-      df[j,1] <- site_name
-      df[j,2] <- Year_array[[j]]
-      df[j,3] <- AvgTemp
+      for (k in 1:3) {
+        date_df <- SurveyDates %>% filter(SiteID == Site[[i]] & 
+                                            Year == Year_array[[j]] &
+                                            Visit == as.character(k))
+        date_of <- date_df[[1,4]]
+        date_before <- date_of - 14
+        data <- Site_df %>% filter(Date >= date_before &
+                                     Date <= date_of)
+        AvgTemp <- mean(data$Temp, na.rm = T)
+        df[j,1] <- site_name
+        df[j,2] <- Year_array[[j]]
+        df[j,2+k] <- AvgTemp
+      }
     }
   AvgTempsList[[i]] <- df
 }
 
 AvgTemps_df <- do.call(rbind, AvgTempsList)
 
-Lastrows <- data.frame(SiteID = c("06-02","06-02"), Year = c("2022","2024"), mean_temp = rep(NA,2))
+Lastrows <- data.frame(SiteID = c("06-02","06-02"), 
+                       Year = c("2022","2024"), 
+                       temp1 = rep(NA,2),
+                       temp2 = rep(NA,2),
+                       temp3 = rep(NA,2))
 
 AvgTemps_df <- rbind(AvgTemps_df,Lastrows)
+
+AvgTemps_df$temp1[is.nan(AvgTemps_df$temp1)] <- NA
+AvgTemps_df$temp2[is.nan(AvgTemps_df$temp2)] <- NA
+AvgTemps_df$temp3[is.nan(AvgTemps_df$temp3)] <- NA
 
 TemData2022_OccMod <- filter(AvgTemps_df, Year == "2022")
 TemData2024_OccMod <- filter(AvgTemps_df, Year == "2024")
