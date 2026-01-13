@@ -281,8 +281,8 @@ BD_2022_Mark <- cbind(SiteCovs_2022_df,ch_2022,temp_data_2022)
 
 # Add survey data
 nsurveys <- 3
-Yes <- rep(1,numFrogs*nrow(BD_2022_Mark)/nsurveys)
-No <- rep(0,numFrogs*nrow(BD_2022_Mark)/nsurveys)
+Yes <- rep(1,dets*nrow(BD_2022_Mark)/nsurveys)
+No <- rep(0,dets*nrow(BD_2022_Mark)/nsurveys)
 Survey1 <- matrix(data = c(Yes,No,No), nrow = nrow(BD_2022_Mark), 
                   ncol =  dets)
 colnames(Survey1) <- 1:dets
@@ -311,15 +311,58 @@ BD2022.pr <- process.data(BD_2022_Mark,
 BD2022.ddl<- make.design.data(BD2022.pr)
 save(BD2022.ddl, BD2022.pr, file = "BD2022MarkData.RData")
 
-# After an intial run, betas are really high for theta ~ complex7 and p ~ complex 2
-# So I'm going to fix them at 1
-# BD2022.ddl$Theta$fix <- NA
-# BD2022.ddl$Theta$fix <- ifelse(BD2022.ddl$Theta$ComplexID == "4" |
-#                                  BD2022.ddl$Theta$ComplexID == "5"| 
-#                                  BD2022.ddl$Theta$ComplexID == "7",1,NA)
-# BD2022.ddl$p$fix <- ifelse(BD2022.ddl$p$ComplexID == "2" |
-#                              BD2022.ddl$p$ComplexID == "4"|
-#                              BD2022.ddl$p$ComplexID == "5" ,1,NA)
+# Add temp to ddl
+tempTheta <- as.matrix(temp_data_2022)
+
+temp1 <- tempTheta[,1:6]
+temp2 <-  tempTheta[,13:18]
+temp3 <- tempTheta[,25:30]
+tempTheta <- cbind(temp1,temp2,temp3)
+tempTheta <- c(t(tempTheta))
+tempTheta
+length(tempTheta)
+
+
+tempP <- c(t(as.matrix(temp_data_2022)))
+nrow(BD2022.ddl$Theta)
+BD2022.ddl$Theta$tempTheta <- tempTheta
+BD2022.ddl$p$tempP <- tempP
+
+# add survey to ddl
+Survey1 <- as.data.frame(Survey1)
+Survey1Theta <- Survey1 %>% select(c(pSurvey1_1:pSurvey1_6,
+                                     pSurvey1_25:pSurvey1_30,
+                                     pSurvey1_61:pSurvey1_66))
+Survey2 <- as.data.frame(Survey2)
+Survey2Theta <- Survey2 %>% select(c(pSurvey2_1:pSurvey2_6,
+                                     pSurvey2_25:pSurvey2_30,
+                                     pSurvey2_61:pSurvey2_66))
+Survey3 <- as.data.frame(Survey3)
+Survey3Theta <- Survey3 %>% select(c(pSurvey3_1:pSurvey3_6,
+                                     pSurvey3_25:pSurvey3_30,
+                                     pSurvey3_61:pSurvey3_66))
+Survey1Theta <- c(t(Survey1Theta))
+Survey2Theta <- c(t(Survey2Theta))
+Survey3Theta <- c(t(Survey3Theta))
+BD2022.ddl$Theta$Survey1Theta <- Survey1Theta
+BD2022.ddl$Theta$Survey2Theta <- Survey2Theta
+BD2022.ddl$Theta$Survey3Theta <- Survey3Theta
+
+pSurvey1 <- Survey1 %>% select(c(pSurvey1_1:pSurvey1_12,
+                                 pSurvey1_25:pSurvey1_36,
+                                 pSurvey1_61:pSurvey1_72))
+pSurvey2 <- Survey2 %>% select(c(pSurvey2_1:pSurvey2_12,
+                                 pSurvey2_25:pSurvey2_36,
+                                 pSurvey2_61:pSurvey2_72))
+pSurvey3 <- Survey3 %>% select(c(pSurvey3_1:pSurvey3_12,
+                                 pSurvey3_25:pSurvey3_36,
+                                 pSurvey3_61:pSurvey3_72))
+pSurvey1 <- c(t(pSurvey1))
+pSurvey2 <- c(t(pSurvey2))
+pSurvey3 <- c(t(pSurvey3))
+BD2022.ddl$p$pSurvey1 <- pSurvey1
+BD2022.ddl$p$pSurvey2 <- pSurvey2
+BD2022.ddl$p$pSurvey3 <- pSurvey3
 
 # Create param models
 # For psi
@@ -328,14 +371,14 @@ AlphaPsi <- list(formula =~ alpha)
 BetaPsi <- list (formula =~ beta)
 
 # For Theta
-TempTheta <-  list(formula=~temp + pSurvey1_ + pSurvey2_ + pSurvey3_)
-AlphaTempTheta <-  list(formula =~ alpha + temp + pSurvey1_ + pSurvey2_ + pSurvey3_)
-BetaTempTheta <- list (formula =~ beta + temp + pSurvey1_ + pSurvey2_ + pSurvey3_)
+TempTheta <-  list(formula=~tempTheta + Survey1Theta + Survey2Theta + Survey3Theta)
+AlphaTempTheta <-  list(formula =~ alpha + tempTheta + Survey1Theta + Survey2Theta + Survey3Theta)
+BetaTempTheta <- list (formula =~ beta + tempTheta + Survey1Theta + Survey2Theta + Survey3Theta)
 
 # For p
-TempP <-  list(formula=~temp + pSurvey1_ + pSurvey2_ + pSurvey3_)
-AlphaTempP <-  list(formula =~ alpha + temp + pSurvey1_ + pSurvey2_ + pSurvey3_)
-BetaTempP <- list (formula =~ beta + temp + pSurvey1_ + pSurvey2_ + pSurvey3_)
+TempP <-  list(formula=~tempP + pSurvey1 + pSurvey2 + pSurvey3)
+AlphaTempP <-  list(formula =~ alpha + tempP + pSurvey1 + pSurvey2 + pSurvey3)
+BetaTempP <- list (formula =~ beta + tempP + pSurvey1 + pSurvey2 + pSurvey3)
 
 # If temp included
 # Psi ~ Temp
@@ -469,11 +512,13 @@ ch_2024 <- BD_2024_wide %>% unite('ch', 3:ncol(BD_2024_wide),sep = "")
 
 BD_2024_Mark <- cbind(SiteCovs_2024_df,temp_data_2024,ch_2024)
 
+BD_2022_Mark$Year <- "2022"
+BD_2024_Mark$Year <- "2024"
 ### Add survey number
 # Add survey data
 nsurveys <- 3
-Yes <- rep(1,numFrogs*nrow(BD_2024_Mark)/nsurveys)
-No <- rep(0,numFrogs*nrow(BD_2024_Mark)/nsurveys)
+Yes <- rep(1,dets*nrow(BD_2024_Mark)/nsurveys)
+No <- rep(0,dets*nrow(BD_2024_Mark)/nsurveys)
 Survey1 <- matrix(data = c(Yes,No,No), nrow = nrow(BD_2024_Mark), 
                   ncol =  dets)
 colnames(Survey1) <- 1:dets
@@ -491,31 +536,84 @@ for(i in 1:length(columns)){
   colnames(Survey3)[[i]] <- paste("pSurvey3",columns[[i]],sep="_")
 }
 
-BD_2024_Mark <- cbind(BD_2024_Mark,Survey1,Survey2,Survey3)
+# BD_2024_Mark <- cbind(BD_2024_Mark,Survey1,Survey2,Survey3)
 
 #create processed data
 BD2024.pr <- process.data(BD_2024_Mark,
                           model = 'MultScalOcc',
-                          mixtures = 2)
+                          mixtures = 2,
+                          groups = "ComplexID")
 
 BD2024.ddl<- make.design.data(BD2024.pr)
 
+# Add temp to ddl
+tempTheta <- as.matrix(temp_data_2024)
+
+temp1 <- tempTheta[,1:6]
+temp2 <-  tempTheta[,13:18]
+temp3 <- tempTheta[,25:30]
+tempTheta <- cbind(temp1,temp2,temp3)
+tempTheta <- c(t(tempTheta))
+tempTheta
+length(tempTheta)
+
+
+tempP <- c(t(as.matrix(temp_data_2024)))
+nrow(BD2024.ddl$Theta)
+BD2024.ddl$Theta$tempTheta <- tempTheta
+BD2024.ddl$p$tempP <- tempP
+
+# add survey to ddl
+Survey1 <- as.data.frame(Survey1)
+Survey1Theta <- Survey1 %>% select(c(pSurvey1_1:pSurvey1_6,
+                                     pSurvey1_25:pSurvey1_30,
+                                     pSurvey1_61:pSurvey1_66))
+Survey2 <- as.data.frame(Survey2)
+Survey2Theta <- Survey2 %>% select(c(pSurvey2_1:pSurvey2_6,
+                                     pSurvey2_25:pSurvey2_30,
+                                     pSurvey2_61:pSurvey2_66))
+Survey3 <- as.data.frame(Survey3)
+Survey3Theta <- Survey3 %>% select(c(pSurvey3_1:pSurvey3_6,
+                                     pSurvey3_25:pSurvey3_30,
+                                     pSurvey3_61:pSurvey3_66))
+Survey1Theta <- c(t(Survey1Theta))
+Survey2Theta <- c(t(Survey2Theta))
+Survey3Theta <- c(t(Survey3Theta))
+BD2024.ddl$Theta$Survey1Theta <- Survey1Theta
+BD2024.ddl$Theta$Survey2Theta <- Survey2Theta
+BD2024.ddl$Theta$Survey3Theta <- Survey3Theta
+
+pSurvey1 <- Survey1 %>% select(c(pSurvey1_1:pSurvey1_12,
+                                 pSurvey1_25:pSurvey1_36,
+                                 pSurvey1_61:pSurvey1_72))
+pSurvey2 <- Survey2 %>% select(c(pSurvey2_1:pSurvey2_12,
+                                 pSurvey2_25:pSurvey2_36,
+                                 pSurvey2_61:pSurvey2_72))
+pSurvey3 <- Survey3 %>% select(c(pSurvey3_1:pSurvey3_12,
+                                 pSurvey3_25:pSurvey3_36,
+                                 pSurvey3_61:pSurvey3_72))
+pSurvey1 <- c(t(pSurvey1))
+pSurvey2 <- c(t(pSurvey2))
+pSurvey3 <- c(t(pSurvey3))
+BD2024.ddl$p$pSurvey1 <- pSurvey1
+BD2024.ddl$p$pSurvey2 <- pSurvey2
+BD2024.ddl$p$pSurvey3 <- pSurvey3
+
 # Create param models
 # For psi
+
 AlphaPsi <- list(formula =~ alpha)
 BetaPsi <- list (formula =~ beta)
 
 # For Theta
-TempTheta <-  list(formula=~ temp + pSurvey1_ + pSurvey2_ + pSurvey3_)
-AlphaTempTheta <-  list(formula =~ alpha + temp + pSurvey1_ + pSurvey2_ + pSurvey3_)
-BetaTempTheta <- list (formula =~ beta + temp + pSurvey1_ + pSurvey2_ + pSurvey3_)
+TempTheta <-  list(formula=~tempTheta + Survey1Theta + Survey2Theta + Survey3Theta)
+AlphaTempTheta <-  list(formula =~ alpha + tempTheta + Survey1Theta + Survey2Theta + Survey3Theta)
+BetaTempTheta <- list (formula =~ beta + tempTheta + Survey1Theta + Survey2Theta + Survey3Theta)
 
 # For p
-TempP <-  list(formula=~temp + pSurvey1_ + pSurvey2_ + pSurvey3_)
-AlphaTempP <-  list(formula =~ alpha + temp + pSurvey1_ + pSurvey2_ + pSurvey3_)
-BetaTempP <- list (formula =~ beta + temp + pSurvey1_ + pSurvey2_ + pSurvey3_)
-
-
+TempP <-  list(formula=~tempP + pSurvey1 + pSurvey2 + pSurvey3)
+AlphaTempP <-  list(formula =~ alpha + tempP + pSurvey1 + pSurvey2 + pSurvey3)
+BetaTempP <- list (formula =~ beta + tempP + pSurvey1 + pSurvey2 + pSurvey3)
 # If temp included
 # Psi ~ Temp
 
