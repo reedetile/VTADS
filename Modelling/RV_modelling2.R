@@ -142,19 +142,32 @@ RV_2024_Mark <- cbind(SiteCovs_2024_df,temp_data_2024,ch_2024)
 
 RV_Mark <- rbind(RV_2022_Mark,RV_2024_Mark)
 
+Surveys_mat <- matrix(data=NA, nrow = nrow(RV_Mark),ncol = numFrogs)
+
+for (i in 1:nrow(Surveys_mat)) {
+  Surveys_mat[i,] <- rep(1:3, each = numFrogs/Surveys)
+}
+Survey_df <- data.frame(Surveys_mat)
+for(i in 1:ncol(Survey_df)){
+  colnames(Survey_df)[[i]] <- paste("Survey",i,sep="")
+}
+
+RV_Mark <- cbind(RV_Mark, Survey_df)
+
 #create processed data
 RV.pr <- process.data(RV_Mark,
                           model = 'MultScalOcc',
                           mixtures = 2)
 
 RV.ddl<- make.design.data(RV.pr)
+
+
+
+
+# # add survey to ddl
+# RV.ddl$Theta$Survey <- rep(1:3, each = numFrogs/Surveys)
+# RV.ddl$p$Survey <- rep(1:3, each = dets/Surveys)
 save(RV.ddl, RV.pr, file = "RVMarkData.RData")
-
-
-
-# add survey to ddl
-RV.ddl$Theta$ThetaSurvey <- rep(1:3, each = numFrogs/Surveys)
-RV.ddl$p$pSurvey <- rep(1:3, each = dets/Surveys)
 
 
 ### Stepwise approach
@@ -183,11 +196,11 @@ rm(TempModel,
    TempSqModel)
 
 # Next I want to compare Survey vs Survey^2
-SurveyTheta <- list(formula =~ ThetaSurvey)
-SurveyThetaSq <- list(formula =~ ThetaSurvey + I(ThetaSurvey^2))
+SurveyTheta <- list(formula =~ Survey)
+SurveyThetaSq <- list(formula =~ Survey + I(Survey^2))
 
-SurveyP <- list(formula =~ pSurvey)
-SurveyPSq <- list(formula =~ -1 + pSurvey + I(pSurvey^2))
+SurveyP <- list(formula =~ Survey)
+SurveyPSq <- list(formula =~ Survey + I(Survey^2))
 
 SurveyModel <- mark(data = RV.pr,
                     ddl = RV.ddl,
@@ -201,10 +214,13 @@ SurveySqModel <- mark(data = RV.pr,
                       model.parameters = list(Psi = Alpha,
                                               Theta = SurveyThetaSq,
                                               p = SurveyPSq))
-SurveySqModel$results$beta71
+SurveySqModel$results$beta
 RV_Survey_mods <- collect.models()
-RV_Survey_mods$model.table # quadratic is still better than linear (weight = 0.71 vs 0.28)
+RV_Survey_mods$model.table 
+# quadratic is still better than linear (weight = 0.74 vs 0.25)
 # But I think I should investigate both
+# 05/14/2026: Not sure where the above statement came from? Re-checking the analysis the linear model did WAY better
+# I should probably just run linear model for survey
 rm(SurveyModel,SurveySqModel)
 
 
@@ -217,14 +233,14 @@ AlphaPsi <- list(formula =~ alpha)
 BetaPsi <- list (formula =~ beta)
 
 # For Theta
-TempTheta <-  list(formula=~temp + ThetaSurvey)
-AlphaTheta <-  list(formula =~ alpha + temp + ThetaSurvey)
-BetaTheta <- list (formula =~ beta + temp + ThetaSurvey)
+TempTheta <-  list(formula=~temp + Survey)
+AlphaTheta <-  list(formula =~ alpha + temp + Survey)
+BetaTheta <- list (formula =~ beta + temp + Survey)
 
 # For p
-TempP <-  list(formula=~temp + pSurvey)
-AlphaP <-  list(formula =~ alpha + temp + pSurvey)
-BetaP <- list (formula =~ beta + temp + pSurvey)
+TempP <-  list(formula=~temp + Survey)
+AlphaP <-  list(formula =~ alpha + temp + Survey)
+BetaP <- list (formula =~ beta + temp + Survey)
 # If temp included
 # Psi ~ Temp
 
@@ -335,111 +351,111 @@ BetaBetaBeta <- RV_mark_func(Psi = BetaPsi,
                              Theta = BetaTheta,
                              p = BetaP)
 
-# Round 2: Survey is quadratic
-# For psi
-
-AlphaPsi <- list(formula =~ alpha)
-BetaPsi <- list (formula =~ beta)
-
-# For Theta
-TempTheta <-  list(formula=~ temp + ThetaSurvey + I(ThetaSurvey^2))
-AlphaTheta <-  list(formula =~ alpha + temp + ThetaSurvey + I(ThetaSurvey^2))
-BetaTheta <- list (formula =~ beta + temp + ThetaSurvey + I(ThetaSurvey^2))
-
-# For p
-TempP <-  list(formula=~ -1 + temp + pSurvey + I(pSurvey^2))
-AlphaP <-  list(formula =~ -1 + alpha + temp + pSurvey + I(pSurvey^2))
-BetaP <- list (formula =~ -1 +beta + temp + pSurvey + I(pSurvey^2))
-# If temp included
-# Psi ~ Temp
-
-# Null model, but really a temp model
-NullNullNull_sq <- RV_mark_func()
-
-### Psi is null
-# alpha only on p
-NullNullAlpha_sq <- RV_mark_func(p = AlphaP)
-# beta only on p
-NullNullBeta_sq <- RV_mark_func(p = BetaP)
-# alpha only on theta
-NullAlphaNull_sq <- RV_mark_func(Theta = AlphaTheta)
-# alpha on theta and p
-NullAlphaAlpha_sq <- RV_mark_func(Theta = AlphaTheta,
-                               p = AlphaP)
-# Alpha on theta, beta on p
-NullAlphaBeta_sq <- RV_mark_func(Theta = AlphaTheta,
-                              p = BetaP)
-# Beta on theta only
-NullBetaNull_sq <- RV_mark_func(Theta = BetaTheta)
-# Beta on theta, alpha on p
-NullBetaAlpha_sq <- RV_mark_func(Theta = BetaTheta,
-                              p = AlphaP)
-# Beta on theta and p
-NullBetaBeta_sq <- RV_mark_func(Theta = BetaTheta,
-                             p = BetaP)
-### Psi ~ alpha
-# Alpha on psi only
-AlphaNullNull_sq <- RV_mark_func(Psi = AlphaPsi)
-# alpha on p
-AlphaNullAlpha_sq <- RV_mark_func(Psi = AlphaPsi,
-                               p = AlphaP)
-# beta on p
-AlphaNullBeta_sq <- RV_mark_func(Psi = AlphaPsi,
-                              p = BetaP)
-# Alpha on Theta
-AlphaAlphaNull_sq <- RV_mark_func(Psi = AlphaPsi,
-                               Theta = AlphaTheta)
-# Alpha on all 3
-AlphaAlphaAlpha_sq <- RV_mark_func(Psi = AlphaPsi,
-                                Theta = AlphaTheta,
-                                p = AlphaP)
-# Alph on theta, beta on p
-AlphaAlphaBeta_sq <- RV_mark_func(Psi = AlphaPsi,
-                               Theta = AlphaTheta,
-                               p = BetaP)
-# Beta on theta,
-AlphaBetaNull_sq <- RV_mark_func(Psi = AlphaPsi,
-                              Theta = BetaTheta)
-# beta on theta, alpha on p
-AlphaBetaAlpha_sq <- RV_mark_func(Psi = AlphaPsi,
-                               Theta = BetaTheta,
-                               p = AlphaP)
-# Beta on theta and p
-AlphaBetaBeta_sq <- RV_mark_func(Psi = AlphaPsi,
-                              Theta = BetaTheta,
-                              p = BetaP)
-
-### Psi ~ beta
-# Beta only on Psi
-BetaNullNull_sq <- RV_mark_func(Psi = BetaPsi)
-# Alpa on p
-BetaNullAlpha_sq <- RV_mark_func(Psi = BetaPsi,
-                              p = AlphaP)
-# Beta on psi an p
-BetaNullBeta_sq <- RV_mark_func(Psi = BetaPsi,
-                             p = BetaP)
-# Alpha on theta
-BetaAlphaNull_sq <- RV_mark_func(Psi = BetaPsi,
-                              Theta = AlphaTheta)
-# Alpha on Theta and p
-BetaAlphaAlpha_sq <- RV_mark_func(Psi = BetaPsi,
-                               Theta = AlphaTheta,
-                               p = AlphaP)
-# Alpha on theta, beta on p
-BetaAlphaBeta_sq <- RV_mark_func(Psi = BetaPsi,
-                              Theta = AlphaTheta,
-                              p = BetaP)
-# Beta on theta
-BetaBetaNull_sq <- RV_mark_func(Psi = BetaPsi,
-                             Theta = BetaTheta)
-# Beta on theta, alpha on p
-BetaBetaAlpha_sq <- RV_mark_func(Psi = BetaPsi,
-                              Theta = BetaTheta,
-                              p = AlphaP)
-# Beta on all three
-BetaBetaBeta_sq <- RV_mark_func(Psi = BetaPsi,
-                             Theta = BetaTheta,
-                             p = BetaP)
+# # Round 2: Survey is quadratic
+# # For psi
+# 
+# AlphaPsi <- list(formula =~ alpha)
+# BetaPsi <- list (formula =~ beta)
+# 
+# # For Theta
+# TempTheta <-  list(formula=~ temp + Survey + I(Survey^2))
+# AlphaTheta <-  list(formula =~ alpha + temp + Survey + I(Survey^2))
+# BetaTheta <- list (formula =~ beta + temp + Survey + I(Survey^2))
+# 
+# # For p
+# TempP <-  list(formula=~ -1 + temp + Survey + I(Survey^2))
+# AlphaP <-  list(formula =~ -1 + alpha + temp + Survey + I(Survey^2))
+# BetaP <- list (formula =~ -1 +beta + temp + Survey + I(Survey^2))
+# # If temp included
+# # Psi ~ Temp
+# 
+# # Null model, but really a temp model
+# NullNullNull_sq <- RV_mark_func()
+# 
+# ### Psi is null
+# # alpha only on p
+# NullNullAlpha_sq <- RV_mark_func(p = AlphaP)
+# # beta only on p
+# NullNullBeta_sq <- RV_mark_func(p = BetaP)
+# # alpha only on theta
+# NullAlphaNull_sq <- RV_mark_func(Theta = AlphaTheta)
+# # alpha on theta and p
+# NullAlphaAlpha_sq <- RV_mark_func(Theta = AlphaTheta,
+#                                p = AlphaP)
+# # Alpha on theta, beta on p
+# NullAlphaBeta_sq <- RV_mark_func(Theta = AlphaTheta,
+#                               p = BetaP)
+# # Beta on theta only
+# NullBetaNull_sq <- RV_mark_func(Theta = BetaTheta)
+# # Beta on theta, alpha on p
+# NullBetaAlpha_sq <- RV_mark_func(Theta = BetaTheta,
+#                               p = AlphaP)
+# # Beta on theta and p
+# NullBetaBeta_sq <- RV_mark_func(Theta = BetaTheta,
+#                              p = BetaP)
+# ### Psi ~ alpha
+# # Alpha on psi only
+# AlphaNullNull_sq <- RV_mark_func(Psi = AlphaPsi)
+# # alpha on p
+# AlphaNullAlpha_sq <- RV_mark_func(Psi = AlphaPsi,
+#                                p = AlphaP)
+# # beta on p
+# AlphaNullBeta_sq <- RV_mark_func(Psi = AlphaPsi,
+#                               p = BetaP)
+# # Alpha on Theta
+# AlphaAlphaNull_sq <- RV_mark_func(Psi = AlphaPsi,
+#                                Theta = AlphaTheta)
+# # Alpha on all 3
+# AlphaAlphaAlpha_sq <- RV_mark_func(Psi = AlphaPsi,
+#                                 Theta = AlphaTheta,
+#                                 p = AlphaP)
+# # Alph on theta, beta on p
+# AlphaAlphaBeta_sq <- RV_mark_func(Psi = AlphaPsi,
+#                                Theta = AlphaTheta,
+#                                p = BetaP)
+# # Beta on theta,
+# AlphaBetaNull_sq <- RV_mark_func(Psi = AlphaPsi,
+#                               Theta = BetaTheta)
+# # beta on theta, alpha on p
+# AlphaBetaAlpha_sq <- RV_mark_func(Psi = AlphaPsi,
+#                                Theta = BetaTheta,
+#                                p = AlphaP)
+# # Beta on theta and p
+# AlphaBetaBeta_sq <- RV_mark_func(Psi = AlphaPsi,
+#                               Theta = BetaTheta,
+#                               p = BetaP)
+# 
+# ### Psi ~ beta
+# # Beta only on Psi
+# BetaNullNull_sq <- RV_mark_func(Psi = BetaPsi)
+# # Alpa on p
+# BetaNullAlpha_sq <- RV_mark_func(Psi = BetaPsi,
+#                               p = AlphaP)
+# # Beta on psi an p
+# BetaNullBeta_sq <- RV_mark_func(Psi = BetaPsi,
+#                              p = BetaP)
+# # Alpha on theta
+# BetaAlphaNull_sq <- RV_mark_func(Psi = BetaPsi,
+#                               Theta = AlphaTheta)
+# # Alpha on Theta and p
+# BetaAlphaAlpha_sq <- RV_mark_func(Psi = BetaPsi,
+#                                Theta = AlphaTheta,
+#                                p = AlphaP)
+# # Alpha on theta, beta on p
+# BetaAlphaBeta_sq <- RV_mark_func(Psi = BetaPsi,
+#                               Theta = AlphaTheta,
+#                               p = BetaP)
+# # Beta on theta
+# BetaBetaNull_sq <- RV_mark_func(Psi = BetaPsi,
+#                              Theta = BetaTheta)
+# # Beta on theta, alpha on p
+# BetaBetaAlpha_sq <- RV_mark_func(Psi = BetaPsi,
+#                               Theta = BetaTheta,
+#                               p = AlphaP)
+# # Beta on all three
+# BetaBetaBeta_sq <- RV_mark_func(Psi = BetaPsi,
+#                              Theta = BetaTheta,
+#                              p = BetaP)
 
 RV_mods <-  collect.models()
 View(RV_mods$model.table)

@@ -759,7 +759,7 @@ sum(RV_2024_wide$Occ)/nrow(RV_2024_wide) # naive occupancy of 0.333
 RVPrev <- DiseaseData2_2024 %>% 
   mutate(FV3_occ = case_when(FV3_PA1 == 1 | FV3_PA2 == 1 ~ 1,
                             FV3_PA2 == 0 & FV3_PA2 == 0 ~ 0,
-                            is.na(FV3_PA2) & is.na(FV3_PA2) ~ NA)) %>%
+                            is.na(FV3_PA1) & is.na(FV3_PA2) ~ NA)) %>%
   select(!c(LabID:SampleID,FV3_PA1:FV3_PA2)) %>% 
   group_by(SiteID, Survey.Number) %>%
   dplyr::summarise(FV3_prev = sum(FV3_occ,na.rm = T)/n())

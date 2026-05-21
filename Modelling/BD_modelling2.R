@@ -204,9 +204,12 @@ SurveySqModel <- mark(data = BD.pr,
                                               p = SurveyPSq))
 SurveySqModel$results$beta
 BD_Survey_mods <- collect.models()
-BD_Survey_mods$model.table # linear is still better than quadratic, but not by much (weight = 0.54 vs 0.46)
+BD_Survey_mods$model.table 
+# linear is still better than quadratic, but not by much (weight = 0.54 vs 0.46)
 rm(SurveyModel,SurveySqModel)
 # So I think I should investigate both
+# 02/18/2026: In a comment Brittany suggested removed the survey sq and going
+# with the more parsimonious model
 
 
 # Create param models
@@ -336,111 +339,111 @@ BetaBetaBeta <- BD_mark_func(Psi = BetaPsi,
                              Theta = BetaTheta,
                              p = BetaP)
 
-# Round 2: Survey is quadratic
-# For psi
-
-AlphaPsi <- list(formula =~ alpha)
-BetaPsi <- list (formula =~ beta)
-
-# For Theta
-TempTheta <-  list(formula=~temp + ThetaSurvey + I(ThetaSurvey^2))
-AlphaTheta <-  list(formula =~ alpha + temp + ThetaSurvey + I(ThetaSurvey^2))
-BetaTheta <- list (formula =~ beta + temp + ThetaSurvey + I(ThetaSurvey^2))
-
-# For p
-TempP <-  list(formula=~temp + pSurvey + I(pSurvey^2))
-AlphaP <-  list(formula =~ alpha + temp + pSurvey + I(pSurvey^2))
-BetaP <- list (formula =~ beta + temp + pSurvey + I(pSurvey^2))
-# If temp included
-# Psi ~ Temp
-
-# Null model, but really a temp model
-NullNullNull_sq <- BD_mark_func()
-
-### Psi is null
-# alpha only on p
-NullNullAlpha_sq <- BD_mark_func(p = AlphaP)
-# beta only on p
-NullNullBeta_sq <- BD_mark_func(p = BetaP)
-# alpha only on theta
-NullAlphaNull_sq <- BD_mark_func(Theta = AlphaTheta)
-# alpha on theta and p
-NullAlphaAlpha_sq <- BD_mark_func(Theta = AlphaTheta,
-                               p = AlphaP)
-# Alpha on theta, beta on p
-NullAlphaBeta_sq <- BD_mark_func(Theta = AlphaTheta,
-                              p = BetaP)
-# Beta on theta only
-NullBetaNull_sq <- BD_mark_func(Theta = BetaTheta)
-# Beta on theta, alpha on p
-NullBetaAlpha_sq <- BD_mark_func(Theta = BetaTheta,
-                              p = AlphaP)
-# Beta on theta and p
-NullBetaBeta_sq <- BD_mark_func(Theta = BetaTheta,
-                             p = BetaP)
-### Psi ~ alpha
-# Alpha on psi only
-AlphaNullNull_sq <- BD_mark_func(Psi = AlphaPsi)
-# alpha on p
-AlphaNullAlpha_sq <- BD_mark_func(Psi = AlphaPsi,
-                               p = AlphaP)
-# beta on p
-AlphaNullBeta_sq <- BD_mark_func(Psi = AlphaPsi,
-                              p = BetaP)
-# Alpha on Theta
-AlphaAlphaNull_sq <- BD_mark_func(Psi = AlphaPsi,
-                               Theta = AlphaTheta)
-# Alpha on all 3
-AlphaAlphaAlpha_sq <- BD_mark_func(Psi = AlphaPsi,
-                                Theta = AlphaTheta,
-                                p = AlphaP)
-# Alph on theta, beta on p
-AlphaAlphaBeta_sq <- BD_mark_func(Psi = AlphaPsi,
-                               Theta = AlphaTheta,
-                               p = BetaP)
-# Beta on theta,
-AlphaBetaNull_sq <- BD_mark_func(Psi = AlphaPsi,
-                              Theta = BetaTheta)
-# beta on theta, alpha on p
-AlphaBetaAlpha_sq <- BD_mark_func(Psi = AlphaPsi,
-                               Theta = BetaTheta,
-                               p = AlphaP)
-# Beta on theta and p
-AlphaBetaBeta_sq <- BD_mark_func(Psi = AlphaPsi,
-                              Theta = BetaTheta,
-                              p = BetaP)
-
-### Psi ~ beta
-# Beta only on Psi
-BetaNullNull_sq <- BD_mark_func(Psi = BetaPsi)
-# Alpa on p
-BetaNullAlpha_sq <- BD_mark_func(Psi = BetaPsi,
-                              p = AlphaP)
-# Beta on psi an p
-BetaNullBeta_sq <- BD_mark_func(Psi = BetaPsi,
-                             p = BetaP)
-# Alpha on theta
-BetaAlphaNull_sq <- BD_mark_func(Psi = BetaPsi,
-                              Theta = AlphaTheta)
-# Alpha on Theta and p
-BetaAlphaAlpha_sq <- BD_mark_func(Psi = BetaPsi,
-                               Theta = AlphaTheta,
-                               p = AlphaP)
-# Alpha on theta, beta on p
-BetaAlphaBeta_sq <- BD_mark_func(Psi = BetaPsi,
-                              Theta = AlphaTheta,
-                              p = BetaP)
-# Beta on theta
-BetaBetaNull_sq <- BD_mark_func(Psi = BetaPsi,
-                             Theta = BetaTheta)
-# Beta on theta, alpha on p
-BetaBetaAlpha_sq <- BD_mark_func(Psi = BetaPsi,
-                              Theta = BetaTheta,
-                              p = AlphaP)
-# Beta on all three
-BetaBetaBeta_sq <- BD_mark_func(Psi = BetaPsi,
-                             Theta = BetaTheta,
-                             p = BetaP)
+# # Round 2: Survey is quadratic
+# # For psi
+# 
+# AlphaPsi <- list(formula =~ alpha)
+# BetaPsi <- list (formula =~ beta)
+# 
+# # For Theta
+# TempTheta <-  list(formula=~temp + ThetaSurvey + I(ThetaSurvey^2))
+# AlphaTheta <-  list(formula =~ alpha + temp + ThetaSurvey + I(ThetaSurvey^2))
+# BetaTheta <- list (formula =~ beta + temp + ThetaSurvey + I(ThetaSurvey^2))
+# 
+# # For p
+# TempP <-  list(formula=~temp + pSurvey + I(pSurvey^2))
+# AlphaP <-  list(formula =~ alpha + temp + pSurvey + I(pSurvey^2))
+# BetaP <- list (formula =~ beta + temp + pSurvey + I(pSurvey^2))
+# # If temp included
+# # Psi ~ Temp
+# 
+# # Null model, but really a temp model
+# NullNullNull_sq <- BD_mark_func()
+# 
+# ### Psi is null
+# # alpha only on p
+# NullNullAlpha_sq <- BD_mark_func(p = AlphaP)
+# # beta only on p
+# NullNullBeta_sq <- BD_mark_func(p = BetaP)
+# # alpha only on theta
+# NullAlphaNull_sq <- BD_mark_func(Theta = AlphaTheta)
+# # alpha on theta and p
+# NullAlphaAlpha_sq <- BD_mark_func(Theta = AlphaTheta,
+#                                p = AlphaP)
+# # Alpha on theta, beta on p
+# NullAlphaBeta_sq <- BD_mark_func(Theta = AlphaTheta,
+#                               p = BetaP)
+# # Beta on theta only
+# NullBetaNull_sq <- BD_mark_func(Theta = BetaTheta)
+# # Beta on theta, alpha on p
+# NullBetaAlpha_sq <- BD_mark_func(Theta = BetaTheta,
+#                               p = AlphaP)
+# # Beta on theta and p
+# NullBetaBeta_sq <- BD_mark_func(Theta = BetaTheta,
+#                              p = BetaP)
+# ### Psi ~ alpha
+# # Alpha on psi only
+# AlphaNullNull_sq <- BD_mark_func(Psi = AlphaPsi)
+# # alpha on p
+# AlphaNullAlpha_sq <- BD_mark_func(Psi = AlphaPsi,
+#                                p = AlphaP)
+# # beta on p
+# AlphaNullBeta_sq <- BD_mark_func(Psi = AlphaPsi,
+#                               p = BetaP)
+# # Alpha on Theta
+# AlphaAlphaNull_sq <- BD_mark_func(Psi = AlphaPsi,
+#                                Theta = AlphaTheta)
+# # Alpha on all 3
+# AlphaAlphaAlpha_sq <- BD_mark_func(Psi = AlphaPsi,
+#                                 Theta = AlphaTheta,
+#                                 p = AlphaP)
+# # Alph on theta, beta on p
+# AlphaAlphaBeta_sq <- BD_mark_func(Psi = AlphaPsi,
+#                                Theta = AlphaTheta,
+#                                p = BetaP)
+# # Beta on theta,
+# AlphaBetaNull_sq <- BD_mark_func(Psi = AlphaPsi,
+#                               Theta = BetaTheta)
+# # beta on theta, alpha on p
+# AlphaBetaAlpha_sq <- BD_mark_func(Psi = AlphaPsi,
+#                                Theta = BetaTheta,
+#                                p = AlphaP)
+# # Beta on theta and p
+# AlphaBetaBeta_sq <- BD_mark_func(Psi = AlphaPsi,
+#                               Theta = BetaTheta,
+#                               p = BetaP)
+# 
+# ### Psi ~ beta
+# # Beta only on Psi
+# BetaNullNull_sq <- BD_mark_func(Psi = BetaPsi)
+# # Alpa on p
+# BetaNullAlpha_sq <- BD_mark_func(Psi = BetaPsi,
+#                               p = AlphaP)
+# # Beta on psi an p
+# BetaNullBeta_sq <- BD_mark_func(Psi = BetaPsi,
+#                              p = BetaP)
+# # Alpha on theta
+# BetaAlphaNull_sq <- BD_mark_func(Psi = BetaPsi,
+#                               Theta = AlphaTheta)
+# # Alpha on Theta and p
+# BetaAlphaAlpha_sq <- BD_mark_func(Psi = BetaPsi,
+#                                Theta = AlphaTheta,
+#                                p = AlphaP)
+# # Alpha on theta, beta on p
+# BetaAlphaBeta_sq <- BD_mark_func(Psi = BetaPsi,
+#                               Theta = AlphaTheta,
+#                               p = BetaP)
+# # Beta on theta
+# BetaBetaNull_sq <- BD_mark_func(Psi = BetaPsi,
+#                              Theta = BetaTheta)
+# # Beta on theta, alpha on p
+# BetaBetaAlpha_sq <- BD_mark_func(Psi = BetaPsi,
+#                               Theta = BetaTheta,
+#                               p = AlphaP)
+# # Beta on all three
+# BetaBetaBeta_sq <- BD_mark_func(Psi = BetaPsi,
+#                              Theta = BetaTheta,
+#                              p = BetaP)
 
 BD_mods <-  collect.models()
 View(BD_mods$model.table)
