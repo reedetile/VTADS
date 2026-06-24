@@ -4,7 +4,8 @@ library(RMark)
 library(patchwork)
 library(dplyr)
 #setup working directories
-repo <- 'C:/Users/rcscott/VTADS'
+#repo <- 'C:/Users/rcscott/VTADS'
+repo <- "D:/gitrepos/VTADS"
 data <- paste(repo,"/Data", sep = "")
 graphs <- paste(repo,"/Graphing", sep = "")
 # Load necessary models
@@ -360,7 +361,7 @@ RV_pAlpha_df <- RV_pAlpha$estimates %>%
   mutate(lcl = estimate - se) %>%
   mutate(ucl = estimate + se)
 
-RV_pAlpha_df[1,4] <- 0
+
 RV_pAlpha_plot <- ggplot(RV_pAlpha_df, mapping = aes(x = covdata,
                                                      y = estimate))+
   geom_smooth(linewidth = 1.5, colour = "black", se = F) +

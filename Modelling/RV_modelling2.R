@@ -19,7 +19,7 @@ numFrogs <- 12*Surveys
 dets <- numFrogs*2
 
 # Global Variables------------------------------------
-repo <- 'C:/Users/rcscott/VTADS'
+repo <- getwd()
 data <- paste(repo,"/Data", sep = "")
 
 setwd(data)
@@ -143,16 +143,66 @@ RV_2024_Mark <- cbind(SiteCovs_2024_df,temp_data_2024,ch_2024)
 RV_Mark <- rbind(RV_2022_Mark,RV_2024_Mark)
 
 Surveys_mat <- matrix(data=NA, nrow = nrow(RV_Mark),ncol = numFrogs)
-
 for (i in 1:nrow(Surveys_mat)) {
   Surveys_mat[i,] <- rep(1:3, each = numFrogs/Surveys)
 }
-Survey_df <- data.frame(Surveys_mat)
-for(i in 1:ncol(Survey_df)){
-  colnames(Survey_df)[[i]] <- paste("Survey",i,sep="")
+
+
+Survey_num_df <- data.frame(Surveys_mat)
+for(i in 1:ncol(Survey_num_df)){
+  colnames(Survey_num_df)[[i]] <- paste("Survey_num",i,sep="")
 }
 
-RV_Mark <- cbind(RV_Mark, Survey_df)
+Surveys_fac_mat <- matrix(data=NA, nrow = nrow(RV_Mark),ncol = numFrogs*Surveys)
+
+survey_temp <- c(rep(1,12),rep(0,24),rep(0,12),rep(1,12),rep(0,12),rep(0,24),rep(1,12))
+survey_temporary <- c(rep(1,12),
+                      rep(0,24),
+                      rep(0,12),
+                      rep(1,12),
+                      rep(0,12),
+                      rep(0,24),
+                      rep(1,12))
+
+for (i in 1:nrow(Surveys_fac_mat)) {
+  Surveys_fac_mat[i,] <- survey_temporary
+}
+Survey_fac_df <- data.frame(Surveys_fac_mat)
+
+Survey_fac_df_names <- rep(NA,108)
+for(i in 1:ncol(Survey_fac_df)){
+  Survey_fac_df_names[[i]] <- if(i <= 12){
+    paste("Survey1_fac_",i,sep="")
+  } else
+    if(i >= 13 & i <=24){
+      paste("Survey2_fac_",i-12,sep="")
+    } else
+      if(i >= 25 & i <=36){
+        paste("Survey3_fac_",i-24,sep="")
+      } else
+        if(i >= 37 & i <= 48){
+          paste("Survey1_fac_",i-24,sep="")
+        } else
+          if(i >= 49 & i <= 60){
+            paste("Survey2_fac_",i-36,sep="")
+          } else
+            if(i >= 61 & i <= 72){
+              paste("Survey3_fac_",i-48,sep="")
+            } else
+              if(i >= 73 & i <= 84){
+                paste("Survey1_fac_",i-48,sep="")
+              } else
+                if(i >= 85 & i <= 96){
+                  paste("Survey2_fac_",i-60,sep="")
+                } else
+                  if(i >= 97 & i <= 108){
+                    paste("Survey3_fac_",i-72,sep="")
+                  }
+}
+
+colnames(Survey_fac_df) <- Survey_fac_df_names
+
+RV_Mark <- cbind(RV_Mark, Survey_num_df,Survey_fac_df)
 
 #create processed data
 RV.pr <- process.data(RV_Mark,
@@ -171,57 +221,109 @@ save(RV.ddl, RV.pr, file = "RVMarkData.RData")
 
 
 ### Stepwise approach
-# 1) want to determine temp vs. temp2
 
-# temp
+## 06/18/2026: Updated approach: p first then theta
+
+# p first. Null vs. temp/temp^2 vs survey(lin)/survey(fac)
+
 temp <- list(formula=~temp)
 tempsq <- list(formula =~ temp + I(temp^2))
 Alpha <- list(formula=~alpha)
-TempModel <- mark(data = RV.pr,
-                  ddl = RV.ddl,
-                  model.parameters = list(Psi = Alpha,
-                                          Theta = temp,
-                                          p = temp))
-TempModel$results$beta
-TempSqModel <- mark(data = RV.pr,
-                    ddl = RV.ddl,
-                    model.parameters = list(Psi = Alpha,
-                                            Theta = tempsq,
-                                            p = tempsq))
-TempSqModel$results$beta # oh yeah, adding a quadratic breaks the model
-RV_temp_mods <- collect.models()
-RV_temp_mods$model.table
+Null <- list(formula =~ 1)
+SurveyThetaNum <- list(formula =~ Survey_num)
+SurveyThetaFac <- list(formula =~ Survey1_fac_ + Survey2_fac_ + Survey3_fac_)
+SurveyPNum <- list(formula =~ Survey_num)
+SurveyPFac <- list(formula =~ Survey1_fac_ + Survey2_fac_ + Survey3_fac_)
 
-rm(TempModel,
-   TempSqModel)
+TrueNull <- mark(data = RV.pr,
+                 ddl = RV.ddl,
+                 model.parameters = list(Psi = Null,
+                                         Theta = Null,
+                                         p = Null))
 
-# Next I want to compare Survey vs Survey^2
-SurveyTheta <- list(formula =~ Survey)
-SurveyThetaSq <- list(formula =~ Survey + I(Survey^2))
+TempP <- mark(data = RV.pr,
+              ddl = RV.ddl,
+              model.parameters = list(Psi = Alpha,
+                                      Theta = Alpha,
+                                      p = temp))
+TempSqP <- mark(data = RV.pr,
+                ddl = RV.ddl,
+                model.parameters = list(Psi = Alpha,
+                                        Theta = Alpha,
+                                        p = tempsq))
 
-SurveyP <- list(formula =~ Survey)
-SurveyPSq <- list(formula =~ Survey + I(Survey^2))
+Survey_num <- mark(data = RV.pr,
+                   ddl = RV.ddl,
+                   model.parameters = list(Psi = Alpha,
+                                           Theta = Alpha,
+                                           p = SurveyPNum))
 
-SurveyModel <- mark(data = RV.pr,
-                    ddl = RV.ddl,
-                    model.parameters = list(Psi = Alpha,
-                                            Theta = SurveyTheta,
-                                            p = SurveyP))
-SurveyModel$results$beta
+Survey_fac <- mark(data = RV.pr,
+                   ddl = RV.ddl,
+                   model.parameters = list(Psi = Alpha,
+                                           Theta = Alpha,
+                                           p = SurveyPFac))
 
-SurveySqModel <- mark(data = RV.pr,
-                      ddl = RV.ddl,
-                      model.parameters = list(Psi = Alpha,
-                                              Theta = SurveyThetaSq,
-                                              p = SurveyPSq))
-SurveySqModel$results$beta
-RV_Survey_mods <- collect.models()
-RV_Survey_mods$model.table 
-# quadratic is still better than linear (weight = 0.74 vs 0.25)
-# But I think I should investigate both
-# 05/14/2026: Not sure where the above statement came from? Re-checking the analysis the linear model did WAY better
-# I should probably just run linear model for survey
-rm(SurveyModel,SurveySqModel)
+RV_p_mods <- collect.models()
+View(RV_p_mods$model.table) 
+# at least initially it looks like I should carry over the numeric survey variable
+
+## theta
+rm(Survey_fac,
+   Survey_num,
+   TempP,
+   TempSqP,
+   TrueNull)
+
+TrueNull <- mark(data = RV.pr,
+                 ddl = RV.ddl,
+                 model.parameters = list(Psi = Null,
+                                         Theta = Null,
+                                         p = Null),
+                 model.name = "NullModel")
+
+TempTheta <- mark(data = RV.pr,
+              ddl = RV.ddl,
+              model.parameters = list(Psi = Alpha,
+                                      Theta = temp,
+                                      p = SurveyPNum),
+              model.name = "TempLinear")
+TempSqP <- mark(data = RV.pr,
+                ddl = RV.ddl,
+                model.parameters = list(Psi = Alpha,
+                                        Theta = tempsq,
+                                        p = SurveyPNum),
+                model.name = "TempSq")
+
+Survey_num <- mark(data = RV.pr,
+                   ddl = RV.ddl,
+                   model.parameters = list(Psi = Alpha,
+                                           Theta = SurveyThetaNum,
+                                           p = SurveyPNum),
+                   model.name = "SurveyNumeric")
+
+Survey_fac <- mark(data = RV.pr,
+                   ddl = RV.ddl,
+                   model.parameters = list(Psi = Alpha,
+                                           Theta = SurveyThetaFac,
+                                           p = SurveyPNum),
+                   model.name = "SurveyFactor")
+
+RV_Theta_mods <- collect.models()
+View(RV_Theta_mods$model.table) 
+
+Survey_num$results$beta
+
+rm(Survey_fac,
+   Survey_num,
+   TempP,
+   TempSqP,
+   TrueNull)
+
+
+
+
+
 
 
 # Create param models
@@ -233,14 +335,14 @@ AlphaPsi <- list(formula =~ alpha)
 BetaPsi <- list (formula =~ beta)
 
 # For Theta
-TempTheta <-  list(formula=~temp + Survey)
-AlphaTheta <-  list(formula =~ alpha + temp + Survey)
-BetaTheta <- list (formula =~ beta + temp + Survey)
+SurveyTheta <-  list(formula=~ Survey_num)
+AlphaTheta <-  list(formula =~ alpha + Survey_num)
+BetaTheta <- list (formula =~ beta + Survey_num)
 
 # For p
-TempP <-  list(formula=~temp + Survey)
-AlphaP <-  list(formula =~ alpha + temp + Survey)
-BetaP <- list (formula =~ beta + temp + Survey)
+SurveyP <-  list(formula=~ Survey_num)
+AlphaP <-  list(formula =~ alpha + Survey_num)
+BetaP <- list (formula =~ beta + Survey_num)
 # If temp included
 # Psi ~ Temp
 
@@ -254,8 +356,8 @@ TrueNull <- mark(data = RV.pr,
 RV_mark_func <- function(data = RV.pr, 
                          ddl = RV.ddl,
                          Psi = Null,
-                         Theta = TempTheta,
-                         p = TempP){
+                         Theta = SurveyTheta,
+                         p = SurveyP){
   mark(data = data, 
        ddl = ddl,
        model.parameters = list(Psi = Psi,
@@ -458,6 +560,8 @@ BetaBetaBeta <- RV_mark_func(Psi = BetaPsi,
 #                              p = BetaP)
 
 RV_mods <-  collect.models()
+
+RV_mods[[25]]$results$beta
 View(RV_mods$model.table)
 
 setwd(data)
