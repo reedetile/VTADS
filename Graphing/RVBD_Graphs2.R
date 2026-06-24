@@ -106,28 +106,28 @@ ggsave(BD_params_plot, filename = "BD_params_plot.png")
 #   ylim(c(0,1))
 # BD_ThetaAlpha_plot
 # 
-# # Theta ~ beta
-# BD_ThetaBeta <- covariate.predictions(model = BD_mods,
-#                                     data = beta_df,
-#                                     indices = c(2,14,26))
-# BD_ThetaBeta_df <- BD_ThetaBeta$estimates %>%
-#   group_by(covdata) %>%
-#   summarise(estimate = mean(estimate), se = mean(se)) %>%
-#   mutate(lcl = estimate - se) %>%
-#   mutate(ucl = estimate + se)
-# 
-# BD_ThetaBeta_plot <- ggplot(BD_ThetaBeta_df, mapping = aes(x = covdata,
-#                                                        y = estimate))+
-#   geom_smooth(linewidth = 1.5, colour = "black") +
-#   geom_ribbon(aes(ymin = lcl, ymax = ucl), alpha = 0.1) +
-#   #scale_colour_brewer(palette = "Set1") +
-#   xlab("Beta") + 
-#   ylab("Prevalence")+
-#   #geom_rug(data = CoOccurrence2, mapping = aes(x = as.numeric(scale(mean_water_temp)), 
-#   #                                             y = NULL, color = NULL), sides = "b")+
-#   theme_classic()+
-#   ylim(c(0,1))
-# BD_ThetaBeta_plot
+# Theta ~ beta
+BD_ThetaBeta <- covariate.predictions(model = BD_mods,
+                                    data = beta_df,
+                                    indices = 2)
+BD_ThetaBeta_df <- BD_ThetaBeta$estimates %>%
+  group_by(covdata) %>%
+  summarise(estimate = mean(estimate), se = mean(se)) %>%
+  mutate(lcl = estimate - se) %>%
+  mutate(ucl = estimate + se)
+
+BD_ThetaBeta_plot <- ggplot(BD_ThetaBeta$estimates, mapping = aes(x = covdata,
+                                                       y = estimate))+
+  geom_smooth(linewidth = 1.5, colour = "black") +
+  geom_ribbon(aes(ymin = lcl, ymax = ucl), alpha = 0.1) +
+  #scale_colour_brewer(palette = "Set1") +
+  xlab("Beta") +
+  ylab("Prevalence")+
+  #geom_rug(data = CoOccurrence2, mapping = aes(x = as.numeric(scale(mean_water_temp)),
+  #                                             y = NULL, color = NULL), sides = "b")+
+  theme_classic()+
+  ylim(c(0,1))
+BD_ThetaBeta_plot
 # 
 # # p ~ temp
 # BD_pTemp <- covariate.predictions(model = BD_mods,
@@ -264,28 +264,23 @@ RV_ThetaSurvey_plot
 
 
 
-# # Theta ~ beta
-# RV_ThetaBeta <- covariate.predictions(model = RV_mods_sub,
-#                                       data = beta_df,
-#                                       indices = c(2,14,26))
-# RV_ThetaBeta_df <- RV_ThetaBeta$estimates %>%
-#   group_by(covdata) %>%
-#   summarise(estimate = mean(estimate), se = mean(se)) %>%
-#   mutate(lcl = estimate - se) %>%
-#   mutate(ucl = estimate + se)
-# 
-# RV_ThetaBeta_plot <- ggplot(RV_ThetaBeta_df, mapping = aes(x = covdata,
-#                                                            y = estimate))+
-#   geom_smooth(linewidth = 1.5, colour = "black") +
-#   geom_ribbon(aes(ymin = lcl, ymax = ucl), alpha = 0.1) +
-#   #scale_colour_brewer(palette = "Set1") +
-#   xlab("Beta") + 
-#   ylab("Prevalence")+
-#   #geom_rug(data = CoOccurrence2, mapping = aes(x = as.numeric(scale(mean_water_temp)), 
-#   #                                             y = NULL, color = NULL), sides = "b")+
-#   theme_classic()+
-#   ylim(c(0,1))
-# RV_ThetaBeta_plot
+# Theta ~ beta
+RV_ThetaBeta <- covariate.predictions(model = RV_mods,
+                                      data = beta_df,
+                                      indices = 2)
+
+RV_ThetaBeta_plot <- ggplot(RV_ThetaBeta$estimates, mapping = aes(x = covdata,
+                                                                  y = estimate))+
+  geom_smooth(linewidth = 1.5, colour = "black") +
+  geom_ribbon(aes(ymin = lcl, ymax = ucl), alpha = 0.1) +
+  #scale_colour_brewer(palette = "Set1") +
+  xlab("Beta") +
+  ylab("Prevalence")+
+  #geom_rug(data = CoOccurrence2, mapping = aes(x = as.numeric(scale(mean_water_temp)),
+  #                                             y = NULL, color = NULL), sides = "b")+
+  theme_classic()+
+  ylim(c(0,1))
+RV_ThetaBeta_plot
 
 # # p ~ temp
 
