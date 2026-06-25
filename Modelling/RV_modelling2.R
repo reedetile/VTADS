@@ -564,5 +564,13 @@ RV_mods <-  collect.models()
 RV_mods[[25]]$results$beta
 View(RV_mods$model.table)
 
+# model avg results for p ~ alpha
+RV_pAlpha <- covariate.predictions(model = RV_mods,
+                                   data = alpha_df,
+                                   indices = 38)
+mod.avg.p.lm <- lm(estimate ~ covdata, data = RV_pAlpha$estimates)
+summary(mod.avg.p.lm)
+
+
 setwd(data)
 saveRDS(RV_mods,file = "RV_mods.RDS")

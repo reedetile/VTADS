@@ -559,5 +559,35 @@ BetaBetaBeta <- BD_mark_func(Psi = BetaPsi,
 BD_mods <-  collect.models()
 View(BD_mods$model.table)
 
+### Model averaging
+
+# Psi ~ alpha
+alpha <- 2:7 #number of possible species
+alpha_df <- data.frame(alpha = alpha)
+
+BD_PsiAlpha <- covariate.predictions(model = BD_mods,
+                                   data = alpha_df,
+                                   indices = 1)
+mod.avg.psi.lm <- lm(estimate ~ covdata, data = BD_PsiAlpha$estimates)
+summary(mod.avg.psi.lm) # looks like a very weak effect
+
+# theta ~ beta
+beta <- seq(from = 0, to = 0.5, by = 0.1)
+beta_df <- data.frame(beta = beta)
+
+BD_ThetaBeta <- covariate.predictions(model = BD_mods,
+                                     data = beta_df,
+                                     indices = 2)
+mod.avg.beta.lm <- lm(estimate ~ covdata, data = BD_ThetaBeta$estimates)
+summary(mod.avg.beta.lm) # looks like a very weak effect
+
+# p ~ alpha
+
+BD_pAlpha <- covariate.predictions(model = BD_mods,
+                                      data = alpha_df,
+                                      indices = 38)
+mod.avg.p.lm <- lm(estimate ~ covdata, data = BD_pAlpha$estimates)
+summary(mod.avg.p.lm) # looks like a very weak effect
+
 setwd(data)
 saveRDS(BD_mods,file = "BD_mods.RDS")

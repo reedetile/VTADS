@@ -60,6 +60,27 @@ BD_params_plot
 setwd(graphs)
 ggsave(BD_params_plot, filename = "BD_params_plot.png")
 
+# Psi ~ alpha
+
+BD_PsiAlpha <- covariate.predictions(model = BD_mods,
+                                      data = beta_df,
+                                      indices = 1)
+
+
+BD_PsiAlpha_plot <- ggplot(BD_PsiAlpha$estimates, mapping = aes(x = covdata,
+                                                                  y = estimate))+
+  geom_smooth(linewidth = 1.5, colour = "black") +
+  geom_ribbon(aes(ymin = lcl, ymax = ucl), alpha = 0.1) +
+  #scale_colour_brewer(palette = "Set1") +
+  xlab("Alpha") +
+  ylab("Occupancy")+
+  #geom_rug(data = CoOccurrence2, mapping = aes(x = as.numeric(scale(mean_water_temp)),
+  #                                             y = NULL, color = NULL), sides = "b")+
+  theme_classic()+
+  ylim(c(0,1))
+BD_PsiAlpha_plot
+# 
+
 # # Theta ~ temp
 # BD_ThetaTemp <- covariate.predictions(model = BD_mods,
 #                                    data = temp_df,
@@ -346,7 +367,7 @@ RV_pSurvey_plot
 # p ~ Alpha
 RV_pAlpha <- covariate.predictions(model = RV_mods,
                                    data = alpha_df,
-                                   indices = c(38,62,86))
+                                   indices = 38)
 mod.avg.p.lm <- lm(estimate ~ covdata, data = RV_pAlpha$estimates)
 summary(mod.avg.p.lm)
 
@@ -357,7 +378,7 @@ RV_pAlpha_df <- RV_pAlpha$estimates %>%
   mutate(ucl = estimate + se)
 
 
-RV_pAlpha_plot <- ggplot(RV_pAlpha_df, mapping = aes(x = covdata,
+RV_pAlpha_plot <- ggplot(RV_pAlpha$estimates, mapping = aes(x = covdata,
                                                      y = estimate))+
   geom_smooth(linewidth = 1.5, colour = "black", se = F) +
   geom_ribbon(aes(ymin = lcl, ymax = ucl), alpha = 0.1) +
